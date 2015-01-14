@@ -1,0 +1,161 @@
+I. Background on RPC and RPC Generator
+   -----------------------------------
+   Read http://www.cs.vu.nl/~ast/books/ds1/02.pdf to understand RPC in depth
+
+   Read "RPC in C" Tutorial at https://cs.nyu.edu/courses/spring00/V22.0480-002/class07.html
+   to get insight on RPCgen.
+
+   In this assignment, we use JAVA instead of C.
+
+II. JAVA RPC Generator
+    ------------------
+
+    We use 'remote tea' java rpc generator for this assignment.
+
+    Generating required rpcgen executable jar files
+    -----------------------------------------------
+
+        1. Download www.cse.iitb.ac.in/~cendhu/files/remotetea.zip and
+           unzip to get the source code of java rpcgen.
+        2. Import this project in eclipse. "File->Import->General->Existing Project Into Workspace".
+           Download eclipse from www.cse.iitb.ac.in/~cendhu/files/eclipse-java-luna-SR1-linux-gtk-x86_64.tar.gz
+        3. After importing the remotetea project, you can find the following packages under src (in eclipse)
+             -- org.acplt.oncrpc
+             -- org.acplt.oncrpc.ant
+             -- org.acplt.oncrpc.apps.jportmap
+             -- org.acplt.oncrpc.apps.jrpcgen
+             -- org.acplt.oncrpc.apps.jrpcgen.cup_runtime
+             -- org.acplt.oncrpc.server
+             -- org.acplt.oncrpc.web
+             -- tests.org.acplt.oncrpc
+             -- tests.org.acplt.oncrpc.jrpcgen
+           and a build.xml file.
+
+        The "build.xml" is a Ant script which is similar to Makefile for C to generate executables.
+
+        To run build.xml: Right click on build.xml -> Run as -> Ant Build.
+        This creates three executable jar files under "remotetea/classes"
+            1. jrpcgen.jar -- consist of  package "org.acplt.oncrpc.apps.jrpcgen"
+            2. jportmap.jar -- consist of packages "org.acplt.oncrpc.apps.jportmap" "org.acplt.oncrpc.server" and "org.acplt.oncrpc"
+            3. oncrpc.jar -- consist of packages "org.acplt.oncrpc.server" and "org.acplt.oncrpc"
+
+    Generating Client Stub, Server Stub, Marshaling and Unmarsharling code
+    ----------------------------------------------------------------------
+
+        getAccType.x - list all RPC interface along with its version number, interface number and program number. Go through the
+                       tutorial link given in (I. Background) to understand the structure of .x file.
+
+                       One RPC interface named "GET_ACC_TYPE(acc_id_num)" is declared. This function returns account type for
+                       a given account id.
+
+           Extract required-files.zip to get "getAccType.x" file.
+
+        Now, we can generate server stub and client stub program using rpcgen using the following command
+
+           $ java -jar remotetea/classes/jrpcgen.jar getAccType.x
+               - execution of above line generates ONLY the following files
+                  (i) getAccTypeServerStub.java -- Server Stub
+                  (ii) getAccTypeClient.java -- Client Stub
+                  (iii) acc_id_num.java -- Parameter Marshaling and Unmarshaling (Read I. Background)
+                  (iv) getAccType.jav -- Variables and Constant defined in getAccType.x
+
+    Implementation of RPC interface at server side & starting RPC server
+    --------------------------------------------------------------------
+
+        Now, we need to declare/implement interface "GET_ACC_TYPE(acc_id_num" at the server side.
+
+           getAccTypeInterface.java - This file extends getAccTypeServerStub and implement GET_ACC_TYPE_1().
+           acc.txt                  - Containts account details (for now, it has <acc_id, type>)
+
+           Extract required-files.zip to get "getAccTypeInterface.java" and "acc.txt" file.
+
+        Compile all java program to start the RPC server
+           $ javac -classpath .:remotetea/classes/oncrpc.jar *.java -- Compilation
+           $ java -classpath .:remotetea/classes/oncrpc.jar getAccTypeServer -- Start the server
+
+           You may receive RPC portmap failure error while starting the server. To solve this problem, install
+           rpcbind (apt-get install rpcbind) and execute "rpcbind -i".
+
+
+    Implementation of client and its execution
+    ------------------------------------------
+       Now, we need to write a sample client which calls GET_ACC_TYPE().
+
+           Bank.java -- creates an RPC client using getAccTypeClient stub and calls GET_ACC_TYPE_1()
+
+           Extract required-files.zip to get "Bank.java".
+
+       Compile all java program and execute the client.
+
+           $ javac -classpath .:remotetea/classes/oncrpc.jar *.java -- Compilation
+           $ java -classpath .:remotetea/classes/oncrpc.jar Bank ip-address acc_id
+           $ java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 2
+
+Task-1:
+      Current implementation only support "get account type". For a banking application, we need more features.
+      Hence, implement the following RPC interface and respective Client test code.
+
+        1. GET_BALANCE(acc_id) - return the balance associated with acc_id
+        2. SET_BALANCE(acc_id, x) - add 'x' to the existing balance associated with acc_id
+        3. TRANSACTION(src_acc_id, dst_acc_id, x) - Transfer 'x' from src_acc_id to dst_acc_id. (Store the transaction in a history file)
+        4. GET_TRANSACTIOn_HISTORY(acc_id) - Return all transaction history associated with acc_id.
+
+           Should use structure to return this data. For the usage of structure, enum and other variables,
+           look at "remotetea/src/tests/org/acplt/oncrpc/jrpcgen/demo.x"
+
+      Rules for execution: Helps to automate the evaluation. (MUST FOLLOW THIS RULE)
+
+        1. Program should use the given "acc-new.txt"
+        2. Client can be executed using following commands:
+
+            $ java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 GET_BALANCE acc_id
+               OUTPUT FORMAT: acc_id balance
+
+            $ java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 SET_BALANCE acc_id
+               OUTPUT FORMAT: acc_id old_balance current_balance
+
+            $ java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 TRANSACTION src_acc_id dst_acc_id x
+               OUTPUT FORMAT: src_acc_id old_balance dst_acc_id old_balance
+                              src_acc_id new_balance dst_acc_id new_balance
+
+            $ java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 GET_TRANSACTION_HISTORY acc_id y
+               OUTPUT FORMAT: dst_acc_id transaction_amount
+                              dst_acc_id transaction_amount
+                              etc...
+
+        3. Output of above command should be written to a file called "output.txt" in append mode.
+        4. Do not change any file name -- "getAccType.x", "getAccTypeInterface.java" "Bank.java"
+           Just add your code in existing files.
+
+     What to submit:
+            1. All three jar files.
+            2. "getAccType.x", "getAccTypeInterface.java" "Bank.java" excluding stubs.
+            3. Readme.txt file explaining how to execute your program.
+            4. Compress all files into firstRollNo_secondRollNo_task1.zip
+
+Task-2:
+     When remotetea generates server stub and client stub code, it does not add any logging information.
+     We need you to change the remotetea source to add the following functionality at server and client
+     stub code.
+         1. server stub should log <date,time> whenever a RPC procedure is executed.
+         2. client stub should measure the time taken to execute the RPC call.
+
+         These information should be logged to a file named log-server.txt for server stub
+         and log-client.txt for client stub (in the current working directory).
+
+     Where to modify in remotetea:
+         remotetea/src/org/acplt/oncrpc/apps/jrpcgen/jrpcgen.java file is the one which takes .x file as
+         input and generate server and client stub. Start reading this code from main() and understand the
+         execution flow. Then, make necessary changes to this file to add functionality (1) and (2)
+         mentioned above.
+
+     What to submit:
+           1. All three jar files.
+           2. Modified jrpcgen.java.
+           3. Patch for jrpgen.java. With old jrpcgen.java and modified jrpcgen.java,
+              use diff and create a patch file.
+           4. Compress all files into firstRollNo_secondRollNo_task2.zip
+
+
+
+
