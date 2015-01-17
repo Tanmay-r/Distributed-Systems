@@ -111,7 +111,7 @@ Task-1:
             $ java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 GET_BALANCE acc_id
                OUTPUT FORMAT: acc_id balance
 
-            $ java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 SET_BALANCE acc_id
+            $ java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 SET_BALANCE acc_id x
                OUTPUT FORMAT: acc_id old_balance current_balance
 
             $ java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 TRANSACTION src_acc_id dst_acc_id x
