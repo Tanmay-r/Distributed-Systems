@@ -6,31 +6,29 @@
 import org.acplt.oncrpc.*;
 import java.io.IOException;
 
-public class acc_id_num implements XdrAble {
+public class transaction implements XdrAble {
+    public acc_id_num dst_account;
+    public int amount;
 
-    public String value;
-
-    public acc_id_num() {
+    public transaction() {
     }
 
-    public acc_id_num(String value) {
-        this.value = value;
-    }
-
-    public acc_id_num(XdrDecodingStream xdr)
+    public transaction(XdrDecodingStream xdr)
            throws OncRpcException, IOException {
         xdrDecode(xdr);
     }
 
     public void xdrEncode(XdrEncodingStream xdr)
            throws OncRpcException, IOException {
-        xdr.xdrEncodeString(value);
+        dst_account.xdrEncode(xdr);
+        xdr.xdrEncodeInt(amount);
     }
 
     public void xdrDecode(XdrDecodingStream xdr)
            throws OncRpcException, IOException {
-        value = xdr.xdrDecodeString();
+        dst_account = new acc_id_num(xdr);
+        amount = xdr.xdrDecodeInt();
     }
 
 }
-// End of acc_id_num.java
+// End of transaction.java

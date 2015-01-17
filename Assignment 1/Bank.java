@@ -9,7 +9,7 @@ public class Bank {
     public static void main(String [] args) {
 
         // check the arguments
-        if (args.length !=2) {
+        if (args.length !=4) {
             System.out.println("usage: infoline host_name stu num ");
             System.exit(1);
         }
