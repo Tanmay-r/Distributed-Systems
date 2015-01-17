@@ -1,0 +1,7 @@
+java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 GET_BALANCE 1
+java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 SET_BALANCE 1 200
+java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 GET_BALANCE 1
+java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 TRANSACTION 1 2 100
+java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 GET_BALANCE 2
+java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 GET_TRANSACTION_HISTORY 1
+java -classpath .:remotetea/classes/oncrpc.jar Bank 127.0.0.1 1

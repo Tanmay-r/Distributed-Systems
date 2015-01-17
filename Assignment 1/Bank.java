@@ -19,7 +19,7 @@ public class Bank {
         }
         client.getClient().setTimeout(300*1000);
 
-        System.out.print("Making request to server");
+        // System.out.println("Making request to server");
 
         if(args.length == 2){
             acc_id_num arg1 = new acc_id_num ();
