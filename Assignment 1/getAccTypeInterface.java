@@ -219,6 +219,7 @@ public class getAccTypeInterface extends getAccTypeServerStub {
                         }
                         else{
                             curr.next = new LINKEDLIST();
+                            curr.next.txn = new transaction();
                             curr.next.txn.dst_account = new acc_id_num();
                             curr.next.txn.dst_account.value = st.nextToken();
                             curr.next.txn.amount = Integer.parseInt(st.nextToken());
