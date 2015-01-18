@@ -1663,21 +1663,37 @@ public class jrpcgen {
                 out.println("        " + resultType + " result$ = new "
                             + resultType + "();");
             }
+            out.println("        BufferedWriter writer = null;");
+            out.println("        try {");
+            out.println("            File logFile=new File(\"log-client.txt\");");
+            out.println("            writer = new BufferedWriter(new FileWriter(logFile, true));");
+            out.println("            long start = System.currentTimeMillis( );");
+            
+            
             //
             // Now emit the real ONC/RPC call using the (optionally
             // wrapped) parameter and (optionally wrapped) result.
             //
             if ( clampProgAndVers ) {
-                out.println("        client.call("
+                out.println("            client.call("
                             + baseClassname + "." + proc.procedureId
                             + ", " + baseClassname + "." + versionInfo.versionId
                             + ", " + xdrParamsName + ", result$);");
             } else {
-                out.println("        client.call("
+                out.println("            client.call("
                             + baseClassname + "." + proc.procedureId
                             + ", client.getVersion(), "
                             + xdrParamsName + ", result$);");
             }
+            out.println("            long end = System.currentTimeMillis( );");
+            out.println("            writer.write(\"" + proc.procedureId + ": \" + (end - start));");
+            out.println("            writer.newLine();");
+            out.println("        } catch(Exception e) {}");
+            out.println("        finally { ");
+            out.println("            try { ");
+            out.println("                writer.close();");
+            out.println("            } catch(Exception e){}");
+            out.println("        }");
             //
             // In case of a wrapped result we need to return the value
             // of the wrapper, otherwise we can return the result
@@ -1750,6 +1766,11 @@ public class jrpcgen {
         PrintWriter out = createJavaSourceFile(clientClass);
 
         out.println("import java.net.InetAddress;");
+        out.println();
+
+        out.println("import java.util.*;");
+        out.println("import java.text.*;");
+        out.println("import java.io.*;");
         out.println();
 
         out.println("/**");
@@ -2143,6 +2164,10 @@ public class jrpcgen {
         out.println();
         out.println("import org.acplt.oncrpc.server.*;");
         out.println();
+        out.println("import java.util.*;");
+        out.println("import java.text.*;");
+        out.println("import java.io.*;");
+        out.println();
 
         out.println("/**");
         out.println(" */");
@@ -2197,7 +2222,22 @@ public class jrpcgen {
         //
         out.println("    public void dispatchOncRpcCall(OncRpcCallInformation call, int program, int version, int procedure)");
         out.println("           throws OncRpcException, IOException {");
-
+        out.println("        BufferedWriter writer = null;");
+        out.println("        try {");
+        out.println("            File logFile=new File(\"log-server.txt\");");
+        out.println("            writer = new BufferedWriter(new FileWriter(logFile, true));");
+        out.println("            Date dNow = new Date( );");
+        out.println("            SimpleDateFormat ft = new SimpleDateFormat (\"dd-MM-yyyy HH:mm:ss S\");");
+        out.println("            writer.write(ft.format(dNow));");
+        out.println("            writer.newLine();");
+        out.println("        } catch(Exception e) {}");
+        out.println("        finally { ");
+        out.println("            try { ");
+        out.println("                writer.close();");
+        out.println("            } catch(Exception e){}");
+        out.println("        }");
+        
+        
         for ( int versionIdx = 0; versionIdx < versionSize; ++versionIdx ) {
             JrpcgenVersionInfo versionInfo = (JrpcgenVersionInfo)
                 programInfo.versions.elementAt(versionIdx);
