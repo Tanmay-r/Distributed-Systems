@@ -100,8 +100,13 @@ public class Bank {
                 try {
                     LINKEDLIST res = client.GET_TRANSACTIOn_HISTORY_1(arg1);
                     while(res != null){
-                        System.out.println(res.txn.dst_account.value + " " + res.txn.amount);
-                        res = res.next;
+                        if(res.txn.dst_account.value.equals("0")){
+                            res = null;
+                        }
+                        else{
+                            System.out.println(res.txn.dst_account.value + " " + res.txn.amount);
+                            res = res.next;
+                        }
                     }
                 } catch ( Exception e ) {
                     System.out.println("Error contacting server");
