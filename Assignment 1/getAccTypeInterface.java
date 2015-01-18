@@ -197,9 +197,6 @@ public class getAccTypeInterface extends getAccTypeServerStub {
         System.out.println("Processing request for "+ arg1.value);
         LINKEDLIST ret = null;
         LINKEDLIST curr = null;
-        // transaction txn;
-        // txn.dst_account = arg1;
-        // ret.txn = txn;
         try{
             FileReader fr = new FileReader(historyfilename);
             BufferedReader br = new BufferedReader(fr);
@@ -231,7 +228,12 @@ public class getAccTypeInterface extends getAccTypeServerStub {
                 }
             }
             br.close();
-            // if fall through then return error
+            if(ret == null){
+                ret = new LINKEDLIST();
+                ret.txn = new transaction();
+                ret.txn.dst_account = new acc_id_num("0");
+                ret.txn.amount = -1;
+            }
             return ret;
         }
         catch (Exception e){
