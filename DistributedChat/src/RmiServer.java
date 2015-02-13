@@ -30,14 +30,18 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 
 	public void welcomeMessage(String client_id, int number_of_clients,
 			int timestamp, String ip_address) {
+		System.out.println(this.client_id + " " + "Welcome Message "
+				+ client_id);
 		this.other_exist = true;
 		if (timestamp > this.global_timestamp)
 			this.global_timestamp = timestamp;
-		this.number_of_clients = number_of_clients;
+		this.number_of_clients = number_of_clients + 1;
 		if (!all_clients.containsKey(client_id)) {
 			all_clients.put(client_id, ip_address);
 		}
+		System.out.println(this.client_id + " search ");
 		MessageConfig conf = getMessageConfig(this.client_id, 0);
+		System.out.println(this.client_id + " conf " + conf);
 		conf.ack_received.put(client_id, 1);
 		if (this.number_of_clients == conf.ack_received.size()) {
 			this.all_message_configs.remove(conf);
@@ -70,18 +74,23 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 		}
 	}
 
-	private MessageConfig getMessageConfig(String sender_id, int seq_no) {
+	public MessageConfig getMessageConfig(String sender_id, int seq_no) {
 		for (MessageConfig conf : this.all_message_configs) {
-			if (conf.sender_id == sender_id && conf.seq_number == seq_no) {
+			System.out.println(sender_id + " " + seq_no + " " + conf.sender_id
+					+ " " + conf.seq_number);
+			if (conf.sender_id.compareTo(sender_id) == 0
+					&& conf.seq_number == seq_no) {
 				return conf;
 			}
 		}
 		return null;
 	}
 
-	private Message getMessage(String sender_id, int seq_no) {
+	public Message getMessage(String sender_id, int seq_no) {
+
 		for (Message msg : this.message_queue) {
-			if (msg.sender_id == sender_id && msg.seq_number == seq_no) {
+			if (msg.sender_id.compareTo(sender_id) == 0
+					&& msg.seq_number == seq_no) {
 				return msg;
 			}
 		}
@@ -89,11 +98,17 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 	}
 
 	public void globalMessage(String client_id, int seq_no, int timestamp) {
+
 		if (this.global_timestamp < timestamp)
 			this.global_timestamp = timestamp;
 		Message msg = this.getMessage(client_id, seq_no);
 		msg.deliverable = true;
 		msg.timestamp = timestamp;
+		System.out.println(this.client_id + " Global message" + " " + msg + " "
+				+ msg.deliverable);
+		System.out.println(this.client_id + " Global messagecheck" + " "
+				+ this.getMessage(client_id, seq_no) + " "
+				+ this.getMessage(client_id, seq_no).deliverable);
 		this.checkPrint();
 	}
 
@@ -114,10 +129,13 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				}
 			}
 		}
+		System.out.println("Min aaya he " + min);
 		if (min != null && min.deliverable) {
+			System.out.println("Min aaya he dele " + min);
 			if (min.seq_number == 0) {
 				System.out.println(min.sender_id + " Joined Chat");
 				this.all_clients.put(min.sender_id, min.data);
+				this.number_of_clients = this.all_clients.size();
 			} else {
 				System.out.println(min.sender_id + ": " + min.data);
 			}

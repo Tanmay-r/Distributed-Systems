@@ -35,11 +35,14 @@ public class DistributedChat {
 				}
 			}
 		});
-		rmi_server_thread.start(); // Rmi server start
-		while(rmi_obj==null){}
+		//rmi_server_thread.start(); // Rmi server start
+		startRmiServer();
 		multicastJoining(); // multicast message sent
-		Thread.sleep(5);
+		Thread.sleep(1000);
 		if (!rmi_obj.other_exist) {
+			System.out.println("Others not exist!! I'm lonely :P!!");
+			rmi_obj.message_queue.remove(rmi_obj.getMessage(client_id, 0));
+			rmi_obj.all_message_configs.remove(rmi_obj.getMessageConfig(client_id, 0));
 			Thread multicast_server_thread = new Thread(new Runnable() {
 
 				@Override
@@ -56,6 +59,7 @@ public class DistributedChat {
 		}
 		Scanner scn = new Scanner(System.in);
 		while (true) {
+			System.out.print(">");
 			String s = scn.nextLine();
 			if (rmi_obj.number_of_clients == 0) {
 				System.out.println(rmi_obj.client_id + ": " + s);
@@ -68,7 +72,6 @@ public class DistributedChat {
 					sendReply(s.substring(6));
 				}
 			}
-
 		}
 
 	}
@@ -98,16 +101,15 @@ public class DistributedChat {
 
 			// Create a packet that will contain the data
 			// (in the form of bytes) and send it.
-
+			System.out.println("Server preparing to send multicast packet");
 			MessageConfig msg_config = new MessageConfig();
 			msg_config.sender_id = client_id;
 			msg_config.seq_number = 0;
 			rmi_obj.all_message_configs.add(msg_config);
 
 			Message msg = new Message(client_id, 0, ip_address, 0);
-			
+
 			rmi_obj.message_queue.add(msg);
-			
 
 			DatagramPacket msgPacket = new DatagramPacket(msg.toString()
 					.getBytes(), msg.toString().getBytes().length, addr, PORT);
@@ -131,10 +133,10 @@ public class DistributedChat {
 				String m = new String(buf, 0, buf.length);
 				// message using rmi
 				String[] parts = m.split(" ");
-				Message msg = new Message(parts[0], Integer.parseInt(parts[1]),
-						parts[2], Integer.parseInt(parts[3]));
-
+				Message msg = new Message(parts[0], 0, parts[2], 0);
+				System.out.println(client_id + " Received " + msg);
 				welcomeClient(msg);
+				
 			}
 		}
 	}
@@ -148,6 +150,7 @@ public class DistributedChat {
 			}
 			rmi_obj.message_queue.add(msg);
 			rmi_obj.checkPrint();
+			System.out.println(client_id + " welcome_client " + msg );
 			RmiServerIntf obj = (RmiServerIntf) Naming.lookup("//" + msg.data
 					+ "/" + msg.sender_id);
 			obj.welcomeMessage(client_id, rmi_obj.number_of_clients,
