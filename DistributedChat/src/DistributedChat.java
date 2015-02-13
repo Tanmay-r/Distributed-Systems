@@ -1,16 +1,16 @@
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.net.UnknownHostException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.util.Map;
 import java.util.Scanner;
 
 public class DistributedChat {
 	static String client_id;
+	static String ip_address;
 	final static String INET_ADDR = "224.0.0.3";
 	final static int PORT = 9999;
 	static RmiServer rmi_obj;
@@ -20,7 +20,9 @@ public class DistributedChat {
 			System.err.print("Incorrect Use : Give client unique id");
 			return;
 		}
+		InetAddress IP = InetAddress.getLocalHost();
 		client_id = args[0];
+		ip_address = IP.getHostAddress();
 
 		Thread rmi_server_thread = new Thread(new Runnable() {
 
@@ -81,11 +83,12 @@ public class DistributedChat {
 
 		// Instantiate RmiServer
 
-		rmi_obj = new RmiServer(client_id);
+		rmi_obj = new RmiServer(client_id, ip_address);
 
 		// Bind this object instance to the name "RmiServer"
-		Naming.rebind("//localhost/" + client_id, rmi_obj);
-		System.out.println("PeerServer bound in registry : " + client_id);
+		Naming.rebind("//" + ip_address + "/" + client_id, rmi_obj);
+		System.out.println("PeerServer bound in registry : " + ip_address + " "
+				+ client_id);
 	}
 
 	public static void multicastJoining() throws Exception {
@@ -100,7 +103,7 @@ public class DistributedChat {
 			msg_config.seq_number = 0;
 			rmi_obj.all_message_configs.add(msg_config);
 
-			Message msg = new Message(client_id, 0, client_id, 0);
+			Message msg = new Message(client_id, 0, ip_address, 0);
 			rmi_obj.message_queue.add(msg);
 
 			DatagramPacket msgPacket = new DatagramPacket(msg.toString()
@@ -142,10 +145,10 @@ public class DistributedChat {
 			}
 			rmi_obj.message_queue.add(msg);
 			rmi_obj.checkPrint();
-			RmiServerIntf obj = (RmiServerIntf) Naming.lookup("//localhost/"
-					+ msg.sender_id);
+			RmiServerIntf obj = (RmiServerIntf) Naming.lookup("//" + msg.data
+					+ "/" + msg.sender_id);
 			obj.welcomeMessage(client_id, rmi_obj.number_of_clients,
-					msg.timestamp);
+					msg.timestamp, ip_address);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -157,17 +160,17 @@ public class DistributedChat {
 		MessageConfig msg_config = new MessageConfig();
 		msg_config.sender_id = client_id;
 		msg_config.seq_number = rmi_obj.current_sequence_number;
-		msg_config.makeMap(rmi_obj.all_clients);
+		msg_config.makeMap(rmi_obj.all_clients.keySet());
 		rmi_obj.all_message_configs.add(msg_config);
 
 		Message msg = new Message(client_id, rmi_obj.current_sequence_number,
 				m, rmi_obj.global_timestamp);
 		rmi_obj.message_queue.add(msg);
 
-		for (String recv_id : rmi_obj.all_clients) {
+		for (Map.Entry<String, String> recv : rmi_obj.all_clients.entrySet()) {
 			try {
-				RmiServerIntf obj = (RmiServerIntf) Naming
-						.lookup("//localhost/" + recv_id);
+				RmiServerIntf obj = (RmiServerIntf) Naming.lookup("//"
+						+ recv.getValue() + "/" + recv.getKey());
 				obj.normalMessage(msg);
 			} catch (Exception e) {
 				e.printStackTrace();

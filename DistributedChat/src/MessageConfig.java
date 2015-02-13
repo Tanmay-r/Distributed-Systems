@@ -1,6 +1,6 @@
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MessageConfig {
 	public String sender_id;
@@ -17,9 +17,9 @@ public class MessageConfig {
 	public boolean allReceived() {
 		return !(ack_received.containsValue(0));
 	}
-	
-	public void makeMap(List<String> l){
-		for(String s : l){
+
+	public void makeMap(Set<String> l) {
+		for (String s : l) {
 			ack_received.put(s, 0);
 		}
 	}
