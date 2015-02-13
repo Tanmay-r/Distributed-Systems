@@ -13,7 +13,7 @@ public class DistributedChat {
 	static String ip_address;
 	final static String INET_ADDR = "224.0.0.3";
 	final static int PORT = 9999;
-	static RmiServer rmi_obj;
+	static RmiServer rmi_obj = null;
 
 	public static void main(String[] args) throws Exception {
 		if (args.length != 1) {
@@ -36,6 +36,7 @@ public class DistributedChat {
 			}
 		});
 		rmi_server_thread.start(); // Rmi server start
+		while(rmi_obj==null){}
 		multicastJoining(); // multicast message sent
 		Thread.sleep(5);
 		if (!rmi_obj.other_exist) {
@@ -104,7 +105,9 @@ public class DistributedChat {
 			rmi_obj.all_message_configs.add(msg_config);
 
 			Message msg = new Message(client_id, 0, ip_address, 0);
+			
 			rmi_obj.message_queue.add(msg);
+			
 
 			DatagramPacket msgPacket = new DatagramPacket(msg.toString()
 					.getBytes(), msg.toString().getBytes().length, addr, PORT);
