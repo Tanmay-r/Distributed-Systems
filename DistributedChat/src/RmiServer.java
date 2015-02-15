@@ -127,7 +127,40 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				System.out.println(min.sender_id + " Joined Chat");
 				this.all_clients.put(min.sender_id, min.data);
 				this.number_of_clients = this.all_clients.size();
-			} else {
+			} 
+			else if(min.data.equals("\nControl leave")){
+				if(min.sender_id == this.client_id){
+					DistributedChat.is_closed = true;
+					System.out.println("You left chat!!");
+				}
+				else{
+					System.out.println(min.sender_id + " Left Chat");
+					this.number_of_clients-= 1;
+					this.all_clients.remove(min.sender_id);
+					for(MessageConfig conf : this.all_message_configs){
+						if (conf.ackReceived(min.sender_id)) {
+							Message msg = this.getMessage(conf.sender_id, conf.seq_number);
+							System.out.println("this is here " + this.client_id);
+							msg.deliverable = true;
+							for (Map.Entry<String, String> recv : this.all_clients.entrySet()) {
+								try {
+									RmiServerIntf obj = (RmiServerIntf) Naming.lookup("//"
+											+ recv.getValue() + "/" + recv.getKey());
+									obj.globalMessage(this.client_id, msg.seq_number,
+											this.global_timestamp);
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						}
+					}
+					this.message_queue.remove(min);
+					this.checkPrint();
+					return;
+					
+				}
+			}
+			else {
 				System.out.println(min.sender_id + ": " + min.data);
 			}
 			this.message_queue.remove(min);
@@ -164,6 +197,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 			msg.timestamp = timestamp;
 		this.checkPrint();
 		if (conf.ackReceived(client_id)) {
+			this.all_message_configs.remove(conf);
 			msg.deliverable = true;
 			for (Map.Entry<String, String> recv : this.all_clients.entrySet()) {
 				try {
