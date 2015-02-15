@@ -27,6 +27,7 @@ public class DistributedChat {
 
 		// rmi_server_thread.start(); // Rmi server start
 		startRmiServer();
+		System.out.println("To join chat - Control join");
 		Scanner scn = new Scanner(System.in);
 		while (!is_closed) {
 			System.out.print(">");
@@ -84,10 +85,10 @@ public class DistributedChat {
 	public static void startRmiServer() throws Exception {
 		try { // special exception handler for registry creation
 			LocateRegistry.createRegistry(1099);
-			System.out.println("java RMI registry created.");
+			//System.out.println("java RMI registry created.");
 		} catch (RemoteException e) {
 			// do nothing, error means registry already exists
-			System.out.println("java RMI registry already exists.");
+			//System.out.println("java RMI registry already exists.");
 		}
 
 		// Instantiate RmiServer
@@ -96,8 +97,7 @@ public class DistributedChat {
 
 		// Bind this object instance to the name "RmiServer"
 		Naming.rebind("//" + ip_address + "/" + client_id, rmi_obj);
-		System.out.println("PeerServer bound in registry : " + ip_address + " "
-				+ client_id);
+		//System.out.println("PeerServer bound in registry : " + ip_address + " "				+ client_id);
 	}
 
 	public static void multicastJoining() throws Exception {

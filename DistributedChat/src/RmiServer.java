@@ -140,7 +140,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					for(MessageConfig conf : this.all_message_configs){
 						if (conf.ackReceived(min.sender_id)) {
 							Message msg = this.getMessage(conf.sender_id, conf.seq_number);
-							System.out.println("this is here " + this.client_id);
+							//System.out.println("this is here " + this.client_id);
 							msg.deliverable = true;
 							for (Map.Entry<String, String> recv : this.all_clients.entrySet()) {
 								try {
