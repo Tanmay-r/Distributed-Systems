@@ -1,3 +1,9 @@
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.rmi.Naming;
@@ -12,6 +18,9 @@ import java.util.Enumeration;
 import java.util.Scanner;
 
 import javax.crypto.Cipher;
+
+import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
+import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 public class DistributedSecuredChat {
 	static User me;
@@ -71,11 +80,65 @@ public class DistributedSecuredChat {
 
 		}
 		while (true) {
-			System.out.print("Destination? ");
-			String destination_id = scanner.nextLine();
-			User destination = new User(destination_id, "", null);
-			Message message = new Message(MessageType.PublicKeyRequest,"");
-			rmi_obj.flood(destination, me, me, message);
+			System.out.println("Choose Action: ");
+			System.out.println("\t[0] Send Personal Message");
+			System.out.println("\t[1] Send Group Message");
+			System.out.println("\t[2] Create Group");
+			System.out.println("\t[3] Add Member");
+			System.out.println("\t[4] Leave Group");
+			System.out.println("\t[5] Leave Network");	
+			int action = scanner.nextInt();
+			switch(action){
+			case 0: {
+				System.out.print("Destination? ");
+				String destination_id = scanner.nextLine();
+				User destination = new User(destination_id, "", null);
+				Message message = new Message(MessageType.PublicKeyRequest,"Simple message");
+				rmi_obj.flood(destination, me, me, message);
+				break;
+			}
+			case 1: {
+				System.out.print("Group? ");
+				String destination_id = scanner.nextLine();
+				Group destination = new Group(destination_id, null, null);
+				for (Group g : me.membership) {
+					if(g.equals(destination)){
+						System.out.print("Message? ");
+						String msg = scanner.nextLine();
+						msg = DistributedSecuredChat.encrypt(
+								msg, g.public_key);
+						Message message = new Message(MessageType.Data,msg);
+						rmi_obj.group_flood(g, me, me, message);
+					}
+					break;
+				}
+			}
+			case 2: {
+				System.out.print("Group Name? ");
+				String group_id = scanner.nextLine();
+				// Generate a key-pair
+			    kpg = KeyPairGenerator.getInstance("RSA");
+			    kpg.initialize(512); // 512 is the keysize.
+			    kp = kpg.generateKeyPair();
+			    pubk = kp.getPublic();
+			    prvk = kp.getPrivate();
+				Group new_group = new Group(group_id, pubk, prvk);
+				me.membership.add(new_group);
+			}
+			case 3:{
+				System.out.print("Name? ");
+				String member_id = scanner.nextLine();
+				User member = new User(member_id, "", null);
+				Message message = new Message(MessageType.PublicKeyRequest,"Add group");
+				rmi_obj.flood(member, me, me, message);
+			}
+			default:{
+				System.out.println("Wrong!");
+				break;
+			}				
+			}
+			
+			
 			
 			
 		}
@@ -142,4 +205,25 @@ public class DistributedSecuredChat {
 	    byte[] cipherData = cipher.doFinal(inpBytes);
 	    return new String(cipherData,"UTF8");
 	}
+	
+	 /** Read the object from Base64 string. 
+	 * @throws Base64DecodingException */
+	   public static Object fromString( String s ) throws IOException ,
+	                                                       ClassNotFoundException, Base64DecodingException {
+	        byte [] data = Base64.decode( s );
+	        ObjectInputStream ois = new ObjectInputStream( 
+	                                        new ByteArrayInputStream(  data ) );
+	        Object o  = ois.readObject();
+	        ois.close();
+	        return o;
+	   }
+
+	    /** Write the object to a Base64 string. */
+	    public static String toString( Serializable o ) throws IOException {
+	        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	        ObjectOutputStream oos = new ObjectOutputStream( baos );
+	        oos.writeObject( o );
+	        oos.close();
+	        return new String( Base64.encode( baos.toByteArray() ) );
+	    }
 }

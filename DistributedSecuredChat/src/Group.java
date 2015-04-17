@@ -3,40 +3,17 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 
-public class User implements Serializable {
+public class Group implements Serializable {
 	private static final long serialVersionUID = 1L;
 	String id;
-	String ip;
-	PublicKey public_key;
+	transient PublicKey public_key;
 	transient PrivateKey private_key;
-	transient User parent;
-	transient ArrayList<User> children;
-	transient ArrayList<Group> membership;
 
-
-	public User(String id, String ip, PublicKey public_key,
-			PrivateKey private_key, User parent, ArrayList<User> children,
-			ArrayList<Group> membership) {
+	public Group(String id, PublicKey public_key, PrivateKey private_key) {
 		super();
 		this.id = id;
-		this.ip = ip;
 		this.public_key = public_key;
 		this.private_key = private_key;
-		this.parent = parent;
-		this.children = children;
-		this.membership = membership;
-	}
-
-	public User(String id, String ip, PublicKey public_key) {
-		this.id = id;
-		this.ip = ip;
-		this.public_key = public_key;
-	}
-
-	public User() {
-		this.parent = null;
-		this.children = new ArrayList<User>();
-		this.membership = new ArrayList<Group>();
 	}
 
 	@Override
@@ -55,7 +32,7 @@ public class User implements Serializable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		User other = (User) obj;
+		Group other = (Group) obj;
 		if (id == null) {
 			if (other.id != null)
 				return false;
