@@ -175,7 +175,7 @@ public class DistributedSecuredChat {
 	public static String decryptMessage(String inp, SecretKeySpec spec) throws Exception {
 		byte[] inpBytes = inp.getBytes("UTF8");
 		Cipher cipher = Cipher.getInstance("AES");
-		cipher.init(Cipher.ENCRYPT_MODE, spec);
+		cipher.init(Cipher.DECRYPT_MODE, spec);
 		byte[] cipherData = cipher.doFinal(inpBytes);
 		return new String(cipherData,"UTF8");
 	}
