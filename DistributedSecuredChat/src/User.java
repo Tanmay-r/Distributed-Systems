@@ -1,15 +1,17 @@
 import java.io.Serializable;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.ArrayList;
 
 public class User implements Serializable {
 	String id;
 	String ip;
-	String public_key;
-	transient String private_key;
+	PublicKey public_key;
+	transient PrivateKey private_key;
 	transient User parent;
 	transient ArrayList<User> children;
 
-	public User(String id, String ip, String public_key, String private_key,
+	public User(String id, String ip, PublicKey public_key, PrivateKey private_key,
 			User parent, ArrayList<User> children) {
 		this.id = id;
 		this.ip = ip;
@@ -19,7 +21,7 @@ public class User implements Serializable {
 		this.children = children;
 	}
 
-	public User(String id, String ip, String public_key) {
+	public User(String id, String ip, PublicKey public_key) {
 		this.id = id;
 		this.ip = ip;
 		this.public_key = public_key;

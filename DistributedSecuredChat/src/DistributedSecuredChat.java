@@ -3,9 +3,15 @@ import java.net.NetworkInterface;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Scanner;
+
+import javax.crypto.Cipher;
 
 public class DistributedSecuredChat {
 	static User me;
@@ -17,10 +23,21 @@ public class DistributedSecuredChat {
 			System.err.print("Incorrect Use : Give client unique id");
 			return;
 		}
-
+		
+		String xform = "RSA";
+	    // Generate a key-pair
+	    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+	    kpg.initialize(512); // 512 is the keysize.
+	    KeyPair kp = kpg.generateKeyPair();
+	    PublicKey pubk = kp.getPublic();
+	    PrivateKey prvk = kp.getPrivate();
+	    
 		me = new User();
 		scanner = new Scanner(System.in);
 		me.id = args[0];
+		me.public_key = pubk;
+		me.private_key = prvk;
+		
 		try {
 			me.ip = chooseIP();
 		} catch (Exception e) {
@@ -56,10 +73,11 @@ public class DistributedSecuredChat {
 		while (true) {
 			System.out.print("Destination? ");
 			String destination_id = scanner.nextLine();
-			System.out.print("Message? ");
-			String message = scanner.nextLine();
-			User destination = new User(destination_id, "", "");
+			User destination = new User(destination_id, "", null);
+			Message message = new Message(MessageType.PublicKeyRequest,"");
 			rmi_obj.flood(destination, me, me, message);
+			
+			
 		}
 		//scanner.close();
 
@@ -107,5 +125,19 @@ public class DistributedSecuredChat {
 				return ips.get(choice);
 			}
 		}
+	}
+	
+	public static String encrypt(String inp, PublicKey key) throws Exception {
+	    byte[] inpBytes = inp.getBytes();
+		Cipher cipher = Cipher.getInstance("RSA");
+	    cipher.init(Cipher.ENCRYPT_MODE, key);
+	    return cipher.doFinal(inpBytes).toString();
+	}
+	
+	public static String decrypt(String inp, PrivateKey key) throws Exception{
+		byte[] inpBytes = inp.getBytes();
+		Cipher cipher = Cipher.getInstance("RSA");
+	    cipher.init(Cipher.DECRYPT_MODE, key);
+	    return cipher.doFinal(inpBytes).toString();
 	}
 }
