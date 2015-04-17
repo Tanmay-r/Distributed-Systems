@@ -5,18 +5,27 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Scanner;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 public class DistributedSecuredChat {
 	static User me;
 	static RmiServer rmi_obj = null;
 	public static boolean is_closed = false;
+	public static final int AES_Key_Size = 256;
+	static byte[] aesKey;
+	static Cipher pkCipher, aesCipher;
 	static Scanner scanner;
 	public static void main(String[] args) throws Exception {
 		if (args.length != 1) {
@@ -24,10 +33,12 @@ public class DistributedSecuredChat {
 			return;
 		}
 		
-		String xform = "RSA";
+		
+		
 	    // Generate a key-pair
 	    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-	    kpg.initialize(512); // 512 is the keysize.
+	    SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
+	    kpg.initialize(1024,random); 
 	    KeyPair kp = kpg.generateKeyPair();
 	    PublicKey pubk = kp.getPublic();
 	    PrivateKey prvk = kp.getPrivate();
@@ -37,7 +48,6 @@ public class DistributedSecuredChat {
 		me.id = args[0];
 		me.public_key = pubk;
 		me.private_key = prvk;
-		
 		try {
 			me.ip = chooseIP();
 		} catch (Exception e) {
@@ -74,7 +84,7 @@ public class DistributedSecuredChat {
 			System.out.print("Destination? ");
 			String destination_id = scanner.nextLine();
 			User destination = new User(destination_id, "", null);
-			Message message = new Message(MessageType.PublicKeyRequest,"");
+			Message message = new Message(MessageType.PublicKeyRequest,"", "");
 			rmi_obj.flood(destination, me, me, message);
 			
 			
@@ -127,19 +137,44 @@ public class DistributedSecuredChat {
 		}
 	}
 	
-	public static String encrypt(String inp, PublicKey key) throws Exception {
-	    byte[] inpBytes = inp.getBytes("UTF8");
-		Cipher cipher = Cipher.getInstance("RSA");
+	public static String encrypt(SecretKeySpec inp, PublicKey key) throws Exception {
+	    byte[] inpBytes = inp.getEncoded();
+		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 	    cipher.init(Cipher.ENCRYPT_MODE, key);
 	    byte[] cipherData = cipher.doFinal(inpBytes);
-	    return new String(cipherData,"UTF8");
+	    return new String(cipherData, "UTF8");
 	}
 	
-	public static String decrypt(String inp, PrivateKey key) throws Exception{
-		byte[] inpBytes = inp.getBytes("UTF8");
-		Cipher cipher = Cipher.getInstance("RSA");
+	public static byte[] decrypt(byte[] inpBytes, PrivateKey key) throws Exception{
+		
+		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 	    cipher.init(Cipher.DECRYPT_MODE, key);
-	    byte[] cipherData = cipher.doFinal(inpBytes);
-	    return new String(cipherData,"UTF8");
+	    return cipher.doFinal(inpBytes);
+	    
+	}
+	
+	public static SecretKeySpec makeKey() throws NoSuchAlgorithmException{
+		KeyGenerator kgen = KeyGenerator.getInstance("AES");
+		kgen.init(AES_Key_Size);
+	    SecretKey key = kgen.generateKey();
+	    aesKey = key.getEncoded();
+	    SecretKeySpec aesKeySpec = new SecretKeySpec(aesKey, "AES");
+	    return aesKeySpec;
+	}
+
+	public static String encryptMessage(String inp, SecretKeySpec spec) throws Exception {
+		byte[] inpBytes = inp.getBytes("UTF8");
+		Cipher cipher = Cipher.getInstance("AES");
+		cipher.init(Cipher.ENCRYPT_MODE, spec);
+		byte[] cipherData = cipher.doFinal(inpBytes);
+		return new String(cipherData,"UTF8");
+	}
+	
+	public static String decryptMessage(String inp, SecretKeySpec spec) throws Exception {
+		byte[] inpBytes = inp.getBytes("UTF8");
+		Cipher cipher = Cipher.getInstance("AES");
+		cipher.init(Cipher.ENCRYPT_MODE, spec);
+		byte[] cipherData = cipher.doFinal(inpBytes);
+		return new String(cipherData,"UTF8");
 	}
 }

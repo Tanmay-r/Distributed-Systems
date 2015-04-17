@@ -3,6 +3,9 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+
 public class User implements Serializable {
 	private static final long serialVersionUID = 1L;
 	String id;
@@ -11,7 +14,7 @@ public class User implements Serializable {
 	transient PrivateKey private_key;
 	transient User parent;
 	transient ArrayList<User> children;
-
+	
 	public User(String id, String ip, PublicKey public_key, PrivateKey private_key,
 			User parent, ArrayList<User> children) {
 		this.id = id;
