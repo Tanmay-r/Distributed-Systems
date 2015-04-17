@@ -49,8 +49,9 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				String msg="";
 				try {
 					
-					byte[] aesKeyBytes = DistributedSecuredChat.decrypt(message.key.getBytes(), me.private_key);
-					SecretKeySpec spec = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length, "AES");
+//					byte[] aesKeyBytes = DistributedSecuredChat.decrypt(message.key.getBytes(), me.private_key);
+//					SecretKeySpec spec = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length, "AES");
+					SecretKeySpec spec = new SecretKeySpec(message.key.getBytes(), 0, message.key.getBytes().length, "AES");
 					msg = DistributedSecuredChat.decryptMessage(message.msg, spec);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -76,10 +77,10 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					
 					String encrypted_data = DistributedSecuredChat.encryptMessage(
 							data, spec);
-					String aesKey = DistributedSecuredChat.encrypt(spec, source.public_key);
+//					String aesKey = DistributedSecuredChat.encrypt(spec, source.public_key);
 					System.out.println("My public key " + source.public_key.toString());
 					// User destination = new User(destination_id, "", null);
-					Message msg = new Message(MessageType.Data, aesKey, encrypted_data);
+					Message msg = new Message(MessageType.Data, new String(spec.getEncoded(),"UTF8"), encrypted_data);
 
 					DistributedSecuredChat.rmi_obj.flood(source, me, me, msg);
 				} catch (Exception e) {

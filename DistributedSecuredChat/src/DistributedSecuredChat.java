@@ -42,7 +42,7 @@ public class DistributedSecuredChat {
 	    KeyPair kp = kpg.generateKeyPair();
 	    PublicKey pubk = kp.getPublic();
 	    PrivateKey prvk = kp.getPrivate();
-	    
+	    System.out.println(kp.getPublic().getEncoded().length);
 		me = new User();
 		scanner = new Scanner(System.in);
 		me.id = args[0];
