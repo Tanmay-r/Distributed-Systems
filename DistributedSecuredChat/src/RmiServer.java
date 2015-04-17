@@ -46,7 +46,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 		}
 		else{
 			boolean destination_found = false;
-			if(me.parent.equals(destination)){
+			if((me.parent != null) && (me.parent.equals(destination))){
 				RmiServerIntf parent_rmi_obj;
 				try {
 					parent_rmi_obj = DistributedSecuredChat.getRmiObject(me.parent);
@@ -71,7 +71,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				}
 			}
 			if(!destination_found){
-				if(!me.parent.equals(sender)){
+				if ((me.parent != null) && (!me.parent.equals(sender))){
 					RmiServerIntf parent_rmi_obj;
 					try {
 						parent_rmi_obj = DistributedSecuredChat.getRmiObject(me.parent);
