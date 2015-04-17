@@ -105,6 +105,7 @@ public class DistributedSecuredChat {
 			System.out.println("\t[4] Leave Group");
 			System.out.println("\t[5] Leave Network");
 			int action = scanner.nextInt();
+			scanner.nextLine();
 			switch (action) {
 			case 0: {
 				System.out.print("Destination? ");
