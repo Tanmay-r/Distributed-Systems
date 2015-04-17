@@ -149,6 +149,8 @@ public class DistributedSecuredChat {
 		
 		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 	    cipher.init(Cipher.DECRYPT_MODE, key);
+	    System.out.println(key.getEncoded().length);
+	    System.out.println(inpBytes.length);
 	    return cipher.doFinal(inpBytes);
 	    
 	}
