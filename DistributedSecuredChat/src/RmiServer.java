@@ -98,7 +98,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					
 					byte[] encrypted_data = DistributedSecuredChat.encryptMessage(data, spec);
 					byte[] aesKey = DistributedSecuredChat.encrypt(spec, source.public_key);
-					Message msg = new Message(MessageType.Data, aesKey, encrypted_data);
+					Message msg = new Message(MessageType.GroupKey, aesKey, encrypted_data);
 					
 					DistributedSecuredChat.rmi_obj.flood(source, me, me, msg);
 				} catch (Exception e) {
