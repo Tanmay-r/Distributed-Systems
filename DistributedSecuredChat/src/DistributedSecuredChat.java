@@ -23,6 +23,7 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
@@ -51,12 +52,20 @@ public class DistributedSecuredChat {
 	    KeyPair kp = kpg.generateKeyPair();
 	    PublicKey pubk = kp.getPublic();
 	    PrivateKey prvk = kp.getPrivate();
-	    
+	    System.out.println(kp.getPublic().getEncoded().length);
 		me = new User();
 		scanner = new Scanner(System.in);
 		me.id = args[0];
 		me.public_key = pubk;
 		me.private_key = prvk;
+		
+//		SecretKeySpec spec = makeKey();
+//		byte[] encrypted_data = encryptMessage("hellofjdfjd", spec);
+//		byte[] aesKeyBytes = decrypt(encrypt(spec, pubk),prvk);
+//		spec = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length, "AES");
+//		String data = decryptMessage(encrypted_data, spec);
+//		System.out.println(data);
+		
 		try {
 			me.ip = chooseIP();
 		} catch (Exception e) {
@@ -103,7 +112,7 @@ public class DistributedSecuredChat {
 				System.out.print("Destination? ");
 				String destination_id = scanner.nextLine();
 				User destination = new User(destination_id, "", null);
-				Message message = new Message(MessageType.PublicKeyRequest,"Simple message");
+				Message message = new Message(MessageType.PublicKeyRequest, null,"Simple message");
 				rmi_obj.flood(destination, me, me, message);
 				break;
 			}
@@ -115,9 +124,12 @@ public class DistributedSecuredChat {
 					if(g.equals(destination)){
 						System.out.print("Message? ");
 						String msg = scanner.nextLine();
-						msg = DistributedSecuredChat.encrypt(
-								msg, g.public_key);
-						Message message = new Message(MessageType.Data,msg);
+						SecretKeySpec spec = DistributedSecuredChat.makeKey();
+						
+						byte[] encrypted_data = DistributedSecuredChat.encryptMessage(msg, spec);
+						byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
+						Message message = new Message(MessageType.Data, aesKey, encrypted_data);
+						
 						rmi_obj.group_flood(g, me, me, message);
 					}
 					break;
@@ -128,7 +140,7 @@ public class DistributedSecuredChat {
 				String group_id = scanner.nextLine();
 				// Generate a key-pair
 			    kpg = KeyPairGenerator.getInstance("RSA");
-			    kpg.initialize(512); // 512 is the keysize.
+			    kpg.initialize(1024); // 512 is the keysize.
 			    kp = kpg.generateKeyPair();
 			    pubk = kp.getPublic();
 			    prvk = kp.getPrivate();
@@ -139,7 +151,7 @@ public class DistributedSecuredChat {
 				System.out.print("Name? ");
 				String member_id = scanner.nextLine();
 				User member = new User(member_id, "", null);
-				Message message = new Message(MessageType.PublicKeyRequest,"Add group");
+				Message message = new Message(MessageType.PublicKeyRequest,null,"Add group");
 				rmi_obj.flood(member, me, me, message);
 			}
 			default:{
@@ -198,18 +210,20 @@ public class DistributedSecuredChat {
 		}
 	}
 	
-	public static String encrypt(SecretKeySpec inp, PublicKey key) throws Exception {
+	public static byte[] encrypt(SecretKeySpec inp, PublicKey key) throws Exception {
 	    byte[] inpBytes = inp.getEncoded();
 		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 	    cipher.init(Cipher.ENCRYPT_MODE, key);
 	    byte[] cipherData = cipher.doFinal(inpBytes);
-	    return new String(cipherData, "UTF8");
+	    return cipherData;
 	}
 	
 	public static byte[] decrypt(byte[] inpBytes, PrivateKey key) throws Exception{
 		
 		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 	    cipher.init(Cipher.DECRYPT_MODE, key);
+	    System.out.println(key.getEncoded().length);
+	    System.out.println(inpBytes.length);
 	    return cipher.doFinal(inpBytes);
 	    
 	}
@@ -223,18 +237,29 @@ public class DistributedSecuredChat {
 	    return aesKeySpec;
 	}
 
-	public static String encryptMessage(String inp, SecretKeySpec spec) throws Exception {
+	public static byte[] encryptMessage(String inp, SecretKeySpec spec) throws Exception {
 		byte[] inpBytes = inp.getBytes("UTF8");
-		Cipher cipher = Cipher.getInstance("AES");
-		cipher.init(Cipher.ENCRYPT_MODE, spec);
+		Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+		
+		byte[] iv = new byte[cipher.getBlockSize()];
+        IvParameterSpec ivParams = new IvParameterSpec(iv);
+		
+        cipher.init(Cipher.ENCRYPT_MODE, spec, ivParams);
 		byte[] cipherData = cipher.doFinal(inpBytes);
-		return new String(cipherData,"UTF8");
+		return cipherData;
 	}
 	
-	public static String decryptMessage(String inp, SecretKeySpec spec) throws Exception {
-		byte[] inpBytes = inp.getBytes("UTF8");
-		Cipher cipher = Cipher.getInstance("AES");
-		cipher.init(Cipher.ENCRYPT_MODE, spec);
+	public static String decryptMessage(byte[] inpBytes, SecretKeySpec spec) throws Exception {
+//		byte[] inpBytes = inp.getBytes("UTF8");
+		Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding" );
+		
+		byte[] ivByte = new byte[cipher.getBlockSize()];
+        //This class specifies an initialization vector (IV). Examples which use
+        //IVs are ciphers in feedback mode, e.g., DES in CBC mode and RSA ciphers with OAEP encoding operation.
+        IvParameterSpec ivParamsSpec = new IvParameterSpec(ivByte);
+        
+        
+		cipher.init(Cipher.DECRYPT_MODE, spec,ivParamsSpec);
 		byte[] cipherData = cipher.doFinal(inpBytes);
 		return new String(cipherData,"UTF8");
 	}
