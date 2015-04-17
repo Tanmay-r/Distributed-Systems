@@ -58,6 +58,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					sender_rmi_obj = DistributedSecuredChat
 							.getRmiObject(sender);
 					message.type = MessageType.PublicKeyReply;
+					System.out.println("My public key " + me.public_key.toString());
 					sender_rmi_obj.flood(source, me, me, message);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -68,6 +69,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					String data = DistributedSecuredChat.scanner.nextLine();
 					String encrypted_data = DistributedSecuredChat.encrypt(
 							data, source.public_key);
+					System.out.println("My public key " + source.public_key.toString());
 					// User destination = new User(destination_id, "", null);
 					Message msg = new Message(MessageType.Data, encrypted_data);
 
