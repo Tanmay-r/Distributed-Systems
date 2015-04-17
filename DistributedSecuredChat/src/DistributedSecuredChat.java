@@ -17,6 +17,7 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class DistributedSecuredChat {
@@ -48,6 +49,14 @@ public class DistributedSecuredChat {
 		me.id = args[0];
 		me.public_key = pubk;
 		me.private_key = prvk;
+		
+//		SecretKeySpec spec = makeKey();
+//		byte[] encrypted_data = encryptMessage("hellofjdfjd", spec);
+//		byte[] aesKeyBytes = decrypt(encrypt(spec, pubk),prvk);
+//		spec = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length, "AES");
+//		String data = decryptMessage(encrypted_data, spec);
+//		System.out.println(data);
+		
 		try {
 			me.ip = chooseIP();
 		} catch (Exception e) {
@@ -137,12 +146,12 @@ public class DistributedSecuredChat {
 		}
 	}
 	
-	public static String encrypt(SecretKeySpec inp, PublicKey key) throws Exception {
+	public static byte[] encrypt(SecretKeySpec inp, PublicKey key) throws Exception {
 	    byte[] inpBytes = inp.getEncoded();
 		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 	    cipher.init(Cipher.ENCRYPT_MODE, key);
 	    byte[] cipherData = cipher.doFinal(inpBytes);
-	    return new String(cipherData, "UTF8");
+	    return cipherData;
 	}
 	
 	public static byte[] decrypt(byte[] inpBytes, PrivateKey key) throws Exception{
@@ -164,18 +173,29 @@ public class DistributedSecuredChat {
 	    return aesKeySpec;
 	}
 
-	public static String encryptMessage(String inp, SecretKeySpec spec) throws Exception {
+	public static byte[] encryptMessage(String inp, SecretKeySpec spec) throws Exception {
 		byte[] inpBytes = inp.getBytes("UTF8");
-		Cipher cipher = Cipher.getInstance("AES");
-		cipher.init(Cipher.ENCRYPT_MODE, spec);
+		Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+		
+		byte[] iv = new byte[cipher.getBlockSize()];
+        IvParameterSpec ivParams = new IvParameterSpec(iv);
+		
+        cipher.init(Cipher.ENCRYPT_MODE, spec, ivParams);
 		byte[] cipherData = cipher.doFinal(inpBytes);
-		return new String(cipherData,"UTF8");
+		return cipherData;
 	}
 	
-	public static String decryptMessage(String inp, SecretKeySpec spec) throws Exception {
-		byte[] inpBytes = inp.getBytes("UTF8");
-		Cipher cipher = Cipher.getInstance("AES");
-		cipher.init(Cipher.DECRYPT_MODE, spec);
+	public static String decryptMessage(byte[] inpBytes, SecretKeySpec spec) throws Exception {
+//		byte[] inpBytes = inp.getBytes("UTF8");
+		Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding" );
+		
+		byte[] ivByte = new byte[cipher.getBlockSize()];
+        //This class specifies an initialization vector (IV). Examples which use
+        //IVs are ciphers in feedback mode, e.g., DES in CBC mode and RSA ciphers with OAEP encoding operation.
+        IvParameterSpec ivParamsSpec = new IvParameterSpec(ivByte);
+        
+        
+		cipher.init(Cipher.DECRYPT_MODE, spec,ivParamsSpec);
 		byte[] cipherData = cipher.doFinal(inpBytes);
 		return new String(cipherData,"UTF8");
 	}
