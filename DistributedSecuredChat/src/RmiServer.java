@@ -37,4 +37,65 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 		this.me.parent = parent;
 	}
 
+	//Called by sender
+	@Override
+	public void flood(User destination, User source, User sender, String message)
+			throws RemoteException {
+		if(destination.equals(me)){
+			System.out.println(source.id + ": " + message);
+		}
+		else{
+			boolean destination_found = false;
+			if(me.parent.equals(destination)){
+				RmiServerIntf parent_rmi_obj;
+				try {
+					parent_rmi_obj = DistributedSecuredChat.getRmiObject(me.parent);
+					parent_rmi_obj.flood(destination, source, me, message);
+					destination_found = true;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			else{
+				for(User child:me.children){
+					if(child.equals(destination)){
+						RmiServerIntf child_rmi_obj;
+						try {
+							child_rmi_obj = DistributedSecuredChat.getRmiObject(child);
+							child_rmi_obj.flood(destination, source, me, message);
+							destination_found = true;
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}					
+				}
+			}
+			if(!destination_found){
+				if(!me.parent.equals(sender)){
+					RmiServerIntf parent_rmi_obj;
+					try {
+						parent_rmi_obj = DistributedSecuredChat.getRmiObject(me.parent);
+						parent_rmi_obj.flood(destination, source, me, message);
+						destination_found = true;
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				for(User child:me.children){
+					if(!child.equals(sender)){
+						RmiServerIntf child_rmi_obj;
+						try {
+							child_rmi_obj = DistributedSecuredChat.getRmiObject(child);
+							child_rmi_obj.flood(destination, source, me, message);
+							destination_found = true;
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}					
+				}
+			}
+		}		
+	}
+
+	
 }

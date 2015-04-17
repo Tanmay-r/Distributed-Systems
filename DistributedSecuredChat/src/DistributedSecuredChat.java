@@ -53,7 +53,15 @@ public class DistributedSecuredChat {
 			System.out.println("Wrong input!!!");
 
 		}
-		scanner.close();
+		while (true) {
+			System.out.print("Destination? ");
+			String destination_id = scanner.nextLine();
+			System.out.print("Message? ");
+			String message = scanner.nextLine();
+			User destination = new User(destination_id, "", "");
+			rmi_obj.flood(destination, me, me, message);
+		}
+		//scanner.close();
 
 	}
 
