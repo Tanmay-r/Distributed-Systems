@@ -128,16 +128,18 @@ public class DistributedSecuredChat {
 	}
 	
 	public static String encrypt(String inp, PublicKey key) throws Exception {
-	    byte[] inpBytes = inp.getBytes();
+	    byte[] inpBytes = inp.getBytes("UTF8");
 		Cipher cipher = Cipher.getInstance("RSA");
 	    cipher.init(Cipher.ENCRYPT_MODE, key);
-	    return cipher.doFinal(inpBytes).toString();
+	    byte[] cipherData = cipher.doFinal(inpBytes);
+	    return new String(cipherData,"UTF8");
 	}
 	
 	public static String decrypt(String inp, PrivateKey key) throws Exception{
-		byte[] inpBytes = inp.getBytes();
+		byte[] inpBytes = inp.getBytes("UTF8");
 		Cipher cipher = Cipher.getInstance("RSA");
 	    cipher.init(Cipher.DECRYPT_MODE, key);
-	    return cipher.doFinal(inpBytes).toString();
+	    byte[] cipherData = cipher.doFinal(inpBytes);
+	    return new String(cipherData,"UTF8");
 	}
 }
