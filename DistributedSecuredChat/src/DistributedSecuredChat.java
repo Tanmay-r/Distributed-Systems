@@ -84,7 +84,7 @@ public class DistributedSecuredChat {
 			System.out.print("Destination? ");
 			String destination_id = scanner.nextLine();
 			User destination = new User(destination_id, "", null);
-			Message message = new Message(MessageType.PublicKeyRequest,"", "");
+			Message message = new Message(MessageType.PublicKeyRequest,null, "");
 			rmi_obj.flood(destination, me, me, message);
 			
 			
