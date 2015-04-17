@@ -19,6 +19,8 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.sun.org.apache.xml.internal.security.utils.Base64;
+
 public class DistributedSecuredChat {
 	static User me;
 	static RmiServer rmi_obj = null;
@@ -165,18 +167,18 @@ public class DistributedSecuredChat {
 	}
 
 	public static String encryptMessage(String inp, SecretKeySpec spec) throws Exception {
-		byte[] inpBytes = inp.getBytes("UTF8");
+		byte[] inpBytes = Base64.decode(inp);
 		Cipher cipher = Cipher.getInstance("AES");
 		cipher.init(Cipher.ENCRYPT_MODE, spec);
 		byte[] cipherData = cipher.doFinal(inpBytes);
-		return new String(cipherData,"UTF8");
+		return Base64.encode(cipherData);
 	}
 	
 	public static String decryptMessage(String inp, SecretKeySpec spec) throws Exception {
-		byte[] inpBytes = inp.getBytes("UTF8");
+		byte[] inpBytes = Base64.decode(inp);
 		Cipher cipher = Cipher.getInstance("AES");
 		cipher.init(Cipher.ENCRYPT_MODE, spec);
 		byte[] cipherData = cipher.doFinal(inpBytes);
-		return new String(cipherData,"UTF8");
+		return Base64.encode(cipherData);
 	}
 }
