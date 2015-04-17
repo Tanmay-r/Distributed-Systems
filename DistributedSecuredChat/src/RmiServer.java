@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.crypto.spec.SecretKeySpec;
+
 public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 
 	User me;
@@ -46,10 +48,10 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 			if (message.type == MessageType.Data) {
 				String msg = "";
 				try {
-					msg = DistributedSecuredChat.decrypt(message.msg,
-							me.private_key);
+					byte[] aesKeyBytes = DistributedSecuredChat.decrypt(message.key.getBytes(), me.private_key);
+					SecretKeySpec spec = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length, "AES");
+					msg = DistributedSecuredChat.decryptMessage(message.msg, spec);
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				System.out.println(source.id + ": " + msg);
@@ -70,12 +72,14 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				try {
 					System.out.print("Message? ");
 					String data = DistributedSecuredChat.scanner.nextLine();
-					String encrypted_data = DistributedSecuredChat.encrypt(
-							data, source.public_key);
-					System.out.println("My public key "
-							+ source.public_key.toString());
+					SecretKeySpec spec = DistributedSecuredChat.makeKey();
+					
+					String encrypted_data = DistributedSecuredChat.encryptMessage(
+							data, spec);
+					String aesKey = DistributedSecuredChat.encrypt(spec, source.public_key);
+					System.out.println("My public key " + source.public_key.toString());
 					// User destination = new User(destination_id, "", null);
-					Message msg = new Message(MessageType.Data, encrypted_data);
+					Message msg = new Message(MessageType.Data, aesKey, encrypted_data);
 
 					DistributedSecuredChat.rmi_obj.flood(source, me, me, msg);
 				} catch (Exception e) {
@@ -184,7 +188,6 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 							msg = DistributedSecuredChat.decrypt(message.msg,
 									g.private_key);
 						} catch (Exception e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 						System.out.println(source.id + " in " + g.id + ": "

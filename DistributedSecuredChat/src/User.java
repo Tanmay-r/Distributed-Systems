@@ -3,6 +3,9 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+
 public class User implements Serializable {
 	private static final long serialVersionUID = 1L;
 	String id;
