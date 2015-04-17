@@ -4,6 +4,7 @@ import java.security.PublicKey;
 import java.util.ArrayList;
 
 public class User implements Serializable {
+	private static final long serialVersionUID = 1L;
 	String id;
 	String ip;
 	PublicKey public_key;
