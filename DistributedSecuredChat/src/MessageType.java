@@ -1,6 +1,3 @@
-public enum MessageType{
-		PublicKeyRequest,
-		PublicKeyReply,
-		Data,
-		GroupKey,
-	};
+public enum MessageType {
+	PublicKeyRequest, PublicKeyReply, Data, GroupKey,
+};
