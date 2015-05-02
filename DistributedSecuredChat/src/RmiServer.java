@@ -126,7 +126,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					byte[] encrypted_data = DistributedSecuredChat.encryptMessage(data, spec);
 					byte[] aesKey = DistributedSecuredChat.encrypt(spec, source.public_key);
 					Message msg = new Message(MessageType.GroupKey, aesKey, encrypted_data);
-
+					System.out.println("I'm leader of group " + g.id + " resending group add");
 					DistributedSecuredChat.rmi_obj.flood(source, me, me, msg);
 				}
 				catch(Exception e){}
@@ -210,6 +210,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					if (g.equals(destination)) {
 						if(g.token){
 							try{
+								System.out.println("I'm leader of group " + g.id + " sending leader announce");
 								Message msg = new Message(MessageType.LeaderAnnounce, null, "");
 								KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 								kpg.initialize(1024); // 512 is the keysize.
@@ -231,6 +232,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				for (Group g : me.membership) {
 					if (g.equals(destination)) {
 						if(!g.token){
+							System.out.println("I'm not leader of group " + g.id + " receiving leader announce");
 							Message msg = new Message(MessageType.LeaderGroupReply, null, g.id);
 							me.membership.remove(g);
 							DistributedSecuredChat.rmi_obj.flood(source, me, me, msg);

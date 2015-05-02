@@ -166,9 +166,9 @@ public class DistributedSecuredChat {
 						byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id, spec);
 						byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
 						Message message = new Message(MessageType.LeaveGroup, aesKey, encrypted_data);
-
-						rmi_obj.group_flood(g, me, me, message);
 						me.membership.remove(g);
+						rmi_obj.group_flood(g, me, me, message);
+						
 						break;
 					}
 				}
