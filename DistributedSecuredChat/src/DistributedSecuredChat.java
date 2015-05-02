@@ -118,6 +118,7 @@ public class DistributedSecuredChat {
 				String destination_id = scanner.nextLine();
 				Group destination = new Group(destination_id, null, null);
 				for (Group g : me.membership) {
+					System.out.println("Group id " + g.id + " " + g.disabled + " " + g.token);
 					if (g.equals(destination) && !g.disabled) {
 						System.out.print("Message? ");
 						String msg = scanner.nextLine();
