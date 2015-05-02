@@ -10,21 +10,19 @@ import javax.crypto.spec.SecretKeySpec;
 public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 
 	private static final long serialVersionUID = 1L;
-	User me;
 
 	public RmiServer() throws RemoteException {
 		super(0);
-		this.me = DistributedSecuredChat.me;
 	}
 
 	// Called in parent
 	@Override
 	public void joinMessage(User child) throws RemoteException {
-		System.out.println(me.id + "> Adding child " + child.id);
-		me.children.add(child);
+		System.out.println(DistributedSecuredChat.me.id + "> Adding child " + child.id);
+		DistributedSecuredChat.me.children.add(child);
 		try {
 			RmiServerIntf child_rmi_obj = DistributedSecuredChat.getRmiObject(child);
-			child_rmi_obj.joinConfirmMessage(me);
+			child_rmi_obj.joinConfirmMessage(DistributedSecuredChat.me);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -34,20 +32,20 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 	// Called in child
 	@Override
 	public void joinConfirmMessage(User parent) throws RemoteException {
-		System.out.println(me.id + "> Adding parent after confirm " + parent.id);
-		this.me.parent = parent;
+		System.out.println(DistributedSecuredChat.me.id + "> Adding parent after confirm " + parent.id);
+		DistributedSecuredChat.me.parent = parent;
 	}
 
 	// Called by sender
 	@Override
 	public void flood(User destination, User source, User sender, Message message)
 			throws RemoteException {
-		if (destination.equals(me)) {
+		if (destination.equals(DistributedSecuredChat.me)) {
 			if (message.type == MessageType.Data) {
 				String msg = "";
 				try {
 					byte[] aesKeyBytes = DistributedSecuredChat
-							.decrypt(message.key, me.private_key);
+							.decrypt(message.key, DistributedSecuredChat.me.private_key);
 					SecretKeySpec spec = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length,
 							"AES");
 					msg = DistributedSecuredChat.decryptMessage(message.msg, spec);
@@ -60,7 +58,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				try {
 					sender_rmi_obj = DistributedSecuredChat.getRmiObject(sender);
 					message.type = MessageType.PublicKeyReply;
-					sender_rmi_obj.flood(source, me, me, message);
+					sender_rmi_obj.flood(source, DistributedSecuredChat.me, DistributedSecuredChat.me, message);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -76,12 +74,12 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 						byte[] aesKey = DistributedSecuredChat.encrypt(spec, source.public_key);
 						Message msg = new Message(MessageType.Data, aesKey, encrypted_data);
 
-						DistributedSecuredChat.rmi_obj.flood(source, me, me, msg);
+						DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
 					} else if (m.equals("Add group")) {
 						System.out.println("Group Name? ");
 						String group_name = DistributedSecuredChat.scanner.nextLine();
 						Group g = new Group(group_name, null, null);
-						Group add_g = me.membership.get(me.membership.indexOf(g));
+						Group add_g = DistributedSecuredChat.me.membership.get(DistributedSecuredChat.me.membership.indexOf(g));
 						MyKeyPair pair = new MyKeyPair(add_g.public_key, add_g.private_key,
 								add_g.id);
 						String data = DistributedSecuredChat.toString(pair);
@@ -92,7 +90,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 						byte[] aesKey = DistributedSecuredChat.encrypt(spec, source.public_key);
 						Message msg = new Message(MessageType.GroupKey, aesKey, encrypted_data);
 
-						DistributedSecuredChat.rmi_obj.flood(source, me, me, msg);
+						DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -101,14 +99,14 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				String msg = "";
 				try {
 					byte[] aesKeyBytes = DistributedSecuredChat
-							.decrypt(message.key, me.private_key);
+							.decrypt(message.key, DistributedSecuredChat.me.private_key);
 					SecretKeySpec spec = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length,
 							"AES");
 					msg = DistributedSecuredChat.decryptMessage(message.msg, spec);
 					MyKeyPair pair = (MyKeyPair) DistributedSecuredChat.fromString(msg);
 					Group new_group = new Group(pair.group_id, pair.public_key, pair.private_key);
 					new_group.disabled = false;
-					me.membership.add(new_group);
+					DistributedSecuredChat.me.membership.add(new_group);
 					System.out.println("Added to " + pair.group_id);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -117,7 +115,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				try{
 					String group_name = new String(message.msg, "UTF8");
 					Group g = new Group(group_name, null, null);
-					Group add_g = me.membership.get(me.membership.indexOf(g));
+					Group add_g = DistributedSecuredChat.me.membership.get(DistributedSecuredChat.me.membership.indexOf(g));
 					MyKeyPair pair = new MyKeyPair(add_g.public_key, add_g.private_key,
 							add_g.id);
 					String data = DistributedSecuredChat.toString(pair);
@@ -128,7 +126,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					byte[] aesKey = DistributedSecuredChat.encrypt(spec, source.public_key);
 					Message msg = new Message(MessageType.GroupKey, aesKey, encrypted_data);
 					System.out.println("I'm leader of group " + g.id + " resending group add");
-					DistributedSecuredChat.rmi_obj.flood(source, me, me, msg);
+					DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
 				}
 				catch(Exception e){}
 			}
@@ -136,22 +134,22 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 
 		} else {
 			boolean destination_found = false;
-			if ((me.parent != null) && (me.parent.equals(destination))) {
+			if ((DistributedSecuredChat.me.parent != null) && (DistributedSecuredChat.me.parent.equals(destination))) {
 				RmiServerIntf parent_rmi_obj;
 				try {
-					parent_rmi_obj = DistributedSecuredChat.getRmiObject(me.parent);
-					parent_rmi_obj.flood(destination, source, me, message);
+					parent_rmi_obj = DistributedSecuredChat.getRmiObject(DistributedSecuredChat.me.parent);
+					parent_rmi_obj.flood(destination, source, DistributedSecuredChat.me, message);
 					destination_found = true;
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			} else {
-				for (User child : me.children) {
+				for (User child : DistributedSecuredChat.me.children) {
 					if (child.equals(destination)) {
 						RmiServerIntf child_rmi_obj;
 						try {
 							child_rmi_obj = DistributedSecuredChat.getRmiObject(child);
-							child_rmi_obj.flood(destination, source, me, message);
+							child_rmi_obj.flood(destination, source, DistributedSecuredChat.me, message);
 							destination_found = true;
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -160,22 +158,22 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				}
 			}
 			if (!destination_found) {
-				if ((me.parent != null) && (!me.parent.equals(sender))) {
+				if ((DistributedSecuredChat.me.parent != null) && (!DistributedSecuredChat.me.parent.equals(sender))) {
 					RmiServerIntf parent_rmi_obj;
 					try {
-						parent_rmi_obj = DistributedSecuredChat.getRmiObject(me.parent);
-						parent_rmi_obj.flood(destination, source, me, message);
+						parent_rmi_obj = DistributedSecuredChat.getRmiObject(DistributedSecuredChat.me.parent);
+						parent_rmi_obj.flood(destination, source, DistributedSecuredChat.me, message);
 						destination_found = true;
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
-				for (User child : me.children) {
+				for (User child : DistributedSecuredChat.me.children) {
 					if (!child.equals(sender)) {
 						RmiServerIntf child_rmi_obj;
 						try {
 							child_rmi_obj = DistributedSecuredChat.getRmiObject(child);
-							child_rmi_obj.flood(destination, source, me, message);
+							child_rmi_obj.flood(destination, source, DistributedSecuredChat.me, message);
 							destination_found = true;
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -188,9 +186,9 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 
 	public void group_flood(Group destination, User source, User sender, Message message)
 			throws RemoteException {
-		if (me.membership.contains(destination)) {
+		if (DistributedSecuredChat.me.membership.contains(destination)) {
 			if (message.type == MessageType.Data) {
-				for (Group g : me.membership) {
+				for (Group g : DistributedSecuredChat.me.membership) {
 					if (g.equals(destination)) {
 						String msg = "";
 						try {
@@ -207,7 +205,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					}
 				}
 			} else if (message.type == MessageType.LeaveGroup) {
-				for (Group g : me.membership) {
+				for (Group g : DistributedSecuredChat.me.membership) {
 					if (g.equals(destination)) {
 						if(g.token){
 							try{
@@ -219,7 +217,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 								g.public_key = kp.getPublic();
 								g.private_key = kp.getPrivate();
 								
-								DistributedSecuredChat.rmi_obj.group_flood(g, me, me, msg);
+								DistributedSecuredChat.rmi_obj.group_flood(g, DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
 							}
 							catch(Exception e){
 								e.printStackTrace();
@@ -232,13 +230,13 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					}
 				}
 			} else if (message.type == MessageType.LeaderAnnounce) {
-				for (Group g : me.membership) {
+				for (Group g : DistributedSecuredChat.me.membership) {
 					if (g.equals(destination)) {
 						if(!g.token){
 							System.out.println("I'm not leader of group " + g.id + " receiving leader announce");
 							Message msg = new Message(MessageType.LeaderGroupReply, null, g.id);
-							me.membership.remove(g);
-							DistributedSecuredChat.rmi_obj.flood(source, me, me, msg);
+							DistributedSecuredChat.me.membership.remove(g);
+							DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
 						}
 						break;
 					}
@@ -246,21 +244,21 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 			}
 		}
 
-		if ((me.parent != null) && (!me.parent.equals(sender))) {
+		if ((DistributedSecuredChat.me.parent != null) && (!DistributedSecuredChat.me.parent.equals(sender))) {
 			RmiServerIntf parent_rmi_obj;
 			try {
-				parent_rmi_obj = DistributedSecuredChat.getRmiObject(me.parent);
-				parent_rmi_obj.group_flood(destination, source, me, message);
+				parent_rmi_obj = DistributedSecuredChat.getRmiObject(DistributedSecuredChat.me.parent);
+				parent_rmi_obj.group_flood(destination, source, DistributedSecuredChat.me, message);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		for (User child : me.children) {
+		for (User child : DistributedSecuredChat.me.children) {
 			if (!child.equals(sender)) {
 				RmiServerIntf child_rmi_obj;
 				try {
 					child_rmi_obj = DistributedSecuredChat.getRmiObject(child);
-					child_rmi_obj.group_flood(destination, source, me, message);
+					child_rmi_obj.group_flood(destination, source, DistributedSecuredChat.me, message);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
