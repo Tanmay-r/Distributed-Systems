@@ -118,7 +118,7 @@ public class DistributedSecuredChat {
 				String destination_id = scanner.nextLine();
 				Group destination = new Group(destination_id, null, null);
 				for (Group g : me.membership) {
-					if (g.equals(destination)) {
+					if (g.equals(destination) && !g.disabled) {
 						System.out.print("Message? ");
 						String msg = scanner.nextLine();
 						SecretKeySpec spec = DistributedSecuredChat.makeKey();
@@ -143,6 +143,7 @@ public class DistributedSecuredChat {
 				pubk = kp.getPublic();
 				prvk = kp.getPrivate();
 				Group new_group = new Group(group_id, pubk, prvk);
+				new_group.token = true;
 				me.membership.add(new_group);
 				break;
 			}
@@ -152,6 +153,25 @@ public class DistributedSecuredChat {
 				User member = new User(member_id, "", null);
 				Message message = new Message(MessageType.PublicKeyRequest, null, "Add group");
 				rmi_obj.flood(member, me, me, message);
+				break;
+			}
+			case 4: {
+				System.out.print("Group Name? ");
+				String destination_id = scanner.nextLine();
+				Group destination = new Group(destination_id, null, null);
+				for (Group g : me.membership) {
+					if (g.equals(destination)) {
+						SecretKeySpec spec = DistributedSecuredChat.makeKey();
+
+						byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id, spec);
+						byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
+						Message message = new Message(MessageType.LeaveGroup, aesKey, encrypted_data);
+
+						rmi_obj.group_flood(g, me, me, message);
+						me.membership.remove(g);
+						break;
+					}
+				}
 				break;
 			}
 			default: {

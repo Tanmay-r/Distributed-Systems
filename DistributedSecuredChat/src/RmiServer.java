@@ -1,5 +1,9 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -108,7 +112,26 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+			} else if(message.type == MessageType.LeaderGroupReply) {
+				try{
+					String group_name = new String(message.msg, "UTF8");
+					Group g = new Group(group_name, null, null);
+					Group add_g = me.membership.get(me.membership.indexOf(g));
+					MyKeyPair pair = new MyKeyPair(add_g.public_key, add_g.private_key,
+							add_g.id);
+					String data = DistributedSecuredChat.toString(pair);
+
+					SecretKeySpec spec = DistributedSecuredChat.makeKey();
+
+					byte[] encrypted_data = DistributedSecuredChat.encryptMessage(data, spec);
+					byte[] aesKey = DistributedSecuredChat.encrypt(spec, source.public_key);
+					Message msg = new Message(MessageType.GroupKey, aesKey, encrypted_data);
+
+					DistributedSecuredChat.rmi_obj.flood(source, me, me, msg);
+				}
+				catch(Exception e){}
 			}
+			
 
 		} else {
 			boolean destination_found = false;
@@ -179,6 +202,39 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 							e.printStackTrace();
 						}
 						System.out.println(source.id + " in " + g.id + ": " + msg);
+						break;
+					}
+				}
+			} else if (message.type == MessageType.LeaveGroup) {
+				for (Group g : me.membership) {
+					if (g.equals(destination)) {
+						if(g.token){
+							try{
+								Message msg = new Message(MessageType.LeaderAnnounce, null, "");
+								KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+								kpg.initialize(1024); // 512 is the keysize.
+								KeyPair kp = kpg.generateKeyPair();
+								g.public_key = kp.getPublic();
+								g.private_key = kp.getPrivate();
+								
+								DistributedSecuredChat.rmi_obj.group_flood(g, me, me, msg);
+							}
+							catch(Exception e){
+								e.printStackTrace();
+							}
+						}
+						g.disabled = true;
+						break;
+					}
+				}
+			} else if (message.type == MessageType.LeaderAnnounce) {
+				for (Group g : me.membership) {
+					if (g.equals(destination)) {
+						if(!g.token){
+							Message msg = new Message(MessageType.LeaderGroupReply, null, g.id);
+							me.membership.remove(g);
+							DistributedSecuredChat.rmi_obj.flood(source, me, me, msg);
+						}
 						break;
 					}
 				}

@@ -8,12 +8,17 @@ public class Group implements Serializable {
 	String id;
 	transient PublicKey public_key;
 	transient PrivateKey private_key;
+	transient boolean token;
+	transient boolean disabled;
+	
 
 	public Group(String id, PublicKey public_key, PrivateKey private_key) {
 		super();
 		this.id = id;
 		this.public_key = public_key;
 		this.private_key = private_key;
+		this.token = false;
+		this.disabled = false;
 	}
 
 	@Override
