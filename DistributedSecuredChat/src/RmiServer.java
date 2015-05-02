@@ -107,6 +107,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					msg = DistributedSecuredChat.decryptMessage(message.msg, spec);
 					MyKeyPair pair = (MyKeyPair) DistributedSecuredChat.fromString(msg);
 					Group new_group = new Group(pair.group_id, pair.public_key, pair.private_key);
+					new_group.disabled = false;
 					me.membership.add(new_group);
 					System.out.println("Added to " + pair.group_id);
 				} catch (Exception e) {
@@ -224,7 +225,9 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 								e.printStackTrace();
 							}
 						}
-						g.disabled = true;
+						else{
+							g.disabled = true;
+						}
 						break;
 					}
 				}
