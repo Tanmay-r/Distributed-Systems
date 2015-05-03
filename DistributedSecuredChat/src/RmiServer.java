@@ -4,6 +4,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.ArrayList;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -129,8 +130,32 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
 				}
 				catch(Exception e){}
-			}
-			
+			} else if(message.type == MessageType.ChildLeavingNetwork){
+				try{
+					byte[] aesKeyBytes = DistributedSecuredChat
+							.decrypt(message.key, DistributedSecuredChat.me.private_key);
+					SecretKeySpec spec = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length,
+							"AES");
+					String msg = DistributedSecuredChat.decryptMessage(message.msg, spec);
+					ArrayList<User> children = (ArrayList<User>) DistributedSecuredChat.fromString(msg);
+					for(User child:children){
+						DistributedSecuredChat.me.children.add(child);
+					}
+					DistributedSecuredChat.me.children.remove(source);
+				}
+				catch(Exception e){}
+			} else if(message.type == MessageType.ParentLeavingNetwork){
+				try{
+					byte[] aesKeyBytes = DistributedSecuredChat
+							.decrypt(message.key, DistributedSecuredChat.me.private_key);
+					SecretKeySpec spec = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length,
+							"AES");
+					String msg = DistributedSecuredChat.decryptMessage(message.msg, spec);
+					User parent = (User) DistributedSecuredChat.fromString(msg);
+					DistributedSecuredChat.me.parent = parent;
+				}
+				catch(Exception e){}
+			}			
 
 		} else {
 			boolean destination_found = false;

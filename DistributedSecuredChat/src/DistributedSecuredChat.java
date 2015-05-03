@@ -72,8 +72,8 @@ public class DistributedSecuredChat {
 		startRmiServer();
 		System.out.println("Hello!!" + me.id + " " + me.ip);
 		System.out.println("To join chat");
-
-		while (true) {
+		Boolean in_network = true;
+		while (in_network) {
 			System.out.print("Specify your role ([r]oot/[c]lient)");
 			String input = scanner.nextLine();
 			if (input.startsWith("r")) {
@@ -173,6 +173,53 @@ public class DistributedSecuredChat {
 						break;
 					}
 				}
+				break;
+			}
+			case 5:{
+				for(Group g: me.membership){
+					//TODO leave group
+				}
+				if(me.parent == null){
+					User new_parent = me.children.get(0);
+					me.children.remove(0);
+					String msg = toString(me.children);
+					SecretKeySpec spec = DistributedSecuredChat.makeKey();
+
+					byte[] encrypted_data = DistributedSecuredChat.encryptMessage(msg, spec);
+					byte[] aesKey = DistributedSecuredChat.encrypt(spec, new_parent.public_key);
+					Message message = new Message(MessageType.ChildLeavingNetwork, aesKey, encrypted_data);
+					
+					rmi_obj.flood(me.parent, me, me, message);
+					for (User child:me.children){
+						msg = toString(new_parent);
+						spec = DistributedSecuredChat.makeKey();
+
+						encrypted_data = DistributedSecuredChat.encryptMessage(msg, spec);
+						aesKey = DistributedSecuredChat.encrypt(spec, child.public_key);
+						message = new Message(MessageType.ParentLeavingNetwork, aesKey, encrypted_data);
+						rmi_obj.flood(child, me, me, message);
+					}
+				}
+				else{
+					String msg = toString(me.children);
+					SecretKeySpec spec = DistributedSecuredChat.makeKey();
+
+					byte[] encrypted_data = DistributedSecuredChat.encryptMessage(msg, spec);
+					byte[] aesKey = DistributedSecuredChat.encrypt(spec, me.parent.public_key);
+					Message message = new Message(MessageType.ChildLeavingNetwork, aesKey, encrypted_data);
+					
+					rmi_obj.flood(me.parent, me, me, message);
+					for (User child:me.children){
+						msg = toString(me.parent);
+						spec = DistributedSecuredChat.makeKey();
+
+						encrypted_data = DistributedSecuredChat.encryptMessage(msg, spec);
+						aesKey = DistributedSecuredChat.encrypt(spec, child.public_key);
+						message = new Message(MessageType.ParentLeavingNetwork, aesKey, encrypted_data);
+						rmi_obj.flood(child, me, me, message);
+					}
+				}
+				in_network = false;
 				break;
 			}
 			default: {
