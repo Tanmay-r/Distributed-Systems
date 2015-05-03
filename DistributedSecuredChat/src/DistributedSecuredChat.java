@@ -119,7 +119,7 @@ public class DistributedSecuredChat {
 				Group destination = new Group(destination_id, null, null);
 				for (Group g : me.membership) {
 					System.out.println("Group id " + g.id + " " + g.disabled + " " + g.token);
-					if (g.equals(destination) && !g.disabled) {
+					if (g.equals(destination)) {
 						System.out.print("Message? ");
 						String msg = scanner.nextLine();
 						SecretKeySpec spec = DistributedSecuredChat.makeKey();
@@ -162,13 +162,22 @@ public class DistributedSecuredChat {
 				Group destination = new Group(destination_id, null, null);
 				for (Group g : me.membership) {
 					if (g.equals(destination)) {
-						SecretKeySpec spec = DistributedSecuredChat.makeKey();
-
-						byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id, spec);
-						byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
-						Message message = new Message(MessageType.LeaveGroup, aesKey, encrypted_data);
-						me.membership.remove(g);
-						rmi_obj.group_flood(g, me, me, message);
+						if(!g.token){
+							SecretKeySpec spec = DistributedSecuredChat.makeKey();
+	
+							byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id, spec);
+							byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
+							Message message = new Message(MessageType.LeaveGroup, aesKey, encrypted_data);
+							me.membership.remove(g);
+							rmi_obj.group_flood(g, me, me, message);
+						}else{
+							SecretKeySpec spec = DistributedSecuredChat.makeKey();
+							
+							byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id, spec);
+							byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
+							Message message = new Message(MessageType.TokenPoll, aesKey, encrypted_data);
+							rmi_obj.group_flood(g, me, me, message);
+						}
 						
 						break;
 					}

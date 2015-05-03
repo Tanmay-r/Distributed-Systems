@@ -129,6 +129,43 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
 				}
 				catch(Exception e){}
+			} else if(message.type == MessageType.TokenPollReply){
+				try{
+					String group_name = new String(message.msg, "UTF8");
+					Group g = new Group(group_name, null, null);
+					if(DistributedSecuredChat.me.membership.indexOf(g) != -1){
+						Group add_g = DistributedSecuredChat.me.membership.get(DistributedSecuredChat.me.membership.indexOf(g));
+						DistributedSecuredChat.me.membership.remove(add_g);
+						
+						Message msg = new Message(MessageType.TokenPass, null, add_g.id);
+						System.out.println("I was leader of group " + g.id + " but I'm leaving,sending group token");
+						DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
+					}
+				}
+				catch(Exception e){}
+			} else if(message.type == MessageType.TokenPass){
+				try{
+					String group_name = new String(message.msg, "UTF8");
+					Group g = new Group(group_name, null, null);
+					if(DistributedSecuredChat.me.membership.indexOf(g) != -1){
+						Group add_g = DistributedSecuredChat.me.membership.get(DistributedSecuredChat.me.membership.indexOf(g));
+						DistributedSecuredChat.me.membership.remove(add_g);
+						add_g.token = true;
+						
+						KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+						kpg.initialize(1024); // 512 is the keysize.
+						KeyPair kp = kpg.generateKeyPair();
+						add_g.public_key = kp.getPublic();
+						add_g.private_key = kp.getPrivate();
+						
+						
+						DistributedSecuredChat.me.membership.add(add_g);
+						Message msg = new Message(MessageType.LeaderAnnounce, null, add_g.id);
+						System.out.println("I'm new leader of group " + g.id + " resending group add");
+						DistributedSecuredChat.rmi_obj.group_flood(add_g, DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
+					}
+				}
+				catch(Exception e){}
 			}
 			
 
@@ -236,6 +273,17 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 							System.out.println("I'm not leader of group " + g.id + " receiving leader announce");
 							Message msg = new Message(MessageType.LeaderGroupReply, null, g.id);
 							DistributedSecuredChat.me.membership.remove(g);
+							DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
+						}
+						break;
+					}
+				}
+			} else if(message.type == MessageType.TokenPoll){
+				for (Group g : DistributedSecuredChat.me.membership) {
+					if (g.equals(destination)) {
+						if(!g.token){
+							System.out.println("I'm not leader of group " + g.id + " receiving Token Poll");
+							Message msg = new Message(MessageType.TokenPollReply, null, g.id);
 							DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
 						}
 						break;
