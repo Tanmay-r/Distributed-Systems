@@ -83,20 +83,22 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 						System.out.println("Group Name? ");
 						String group_name = DistributedSecuredChat.scanner.nextLine();
 						Group g = new Group(group_name, null, null);
-						Group add_g = DistributedSecuredChat.me.membership
-								.get(DistributedSecuredChat.me.membership.indexOf(g));
-						MyKeyPair pair = new MyKeyPair(add_g.public_key, add_g.private_key,
-								add_g.id);
-						String data = DistributedSecuredChat.toString(pair);
-
-						SecretKeySpec spec = DistributedSecuredChat.makeKey();
-
-						byte[] encrypted_data = DistributedSecuredChat.encryptMessage(data, spec);
-						byte[] aesKey = DistributedSecuredChat.encrypt(spec, source.public_key);
-						Message msg = new Message(MessageType.GroupKey, aesKey, encrypted_data);
-
-						DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me,
-								DistributedSecuredChat.me, msg);
+						if(DistributedSecuredChat.me.membership.contains(g)){
+							Group add_g = DistributedSecuredChat.me.membership
+									.get(DistributedSecuredChat.me.membership.indexOf(g));
+							MyKeyPair pair = new MyKeyPair(add_g.public_key, add_g.private_key,
+									add_g.id);
+							String data = DistributedSecuredChat.toString(pair);
+	
+							SecretKeySpec spec = DistributedSecuredChat.makeKey();
+	
+							byte[] encrypted_data = DistributedSecuredChat.encryptMessage(data, spec);
+							byte[] aesKey = DistributedSecuredChat.encrypt(spec, source.public_key);
+							Message msg = new Message(MessageType.GroupKey, aesKey, encrypted_data);
+	
+							DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me,
+									DistributedSecuredChat.me, msg);
+						}
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
