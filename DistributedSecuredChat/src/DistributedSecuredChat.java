@@ -190,28 +190,31 @@ public class DistributedSecuredChat {
 				break;
 			}
 			case 5: {
-				
-				for (Iterator<Group> iterator = me.membership.iterator(); iterator.hasNext();) {
-					Group g = iterator.next(); 
-					if (!g.token) {
-						SecretKeySpec spec = DistributedSecuredChat.makeKey();
-
-						byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id, spec);
-						byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
-						Message message = new Message(MessageType.LeaveGroup, aesKey,
-								encrypted_data);
-						iterator.remove();
-						rmi_obj.group_flood(g, me, me, message);
-					} else {
-						SecretKeySpec spec = DistributedSecuredChat.makeKey();
-
-						byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id, spec);
-						byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
-						Message message = new Message(MessageType.TokenPoll, aesKey, encrypted_data);
-						rmi_obj.group_flood(g, me, me, message);
+				try{
+					for (Iterator<Group> iterator = me.membership.iterator(); iterator.hasNext();) {
+						Group g = iterator.next(); 
+						if (!g.token) {
+							SecretKeySpec spec = DistributedSecuredChat.makeKey();
+	
+							byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id, spec);
+							byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
+							Message message = new Message(MessageType.LeaveGroup, aesKey,
+									encrypted_data);
+							iterator.remove();
+							rmi_obj.group_flood(g, me, me, message);
+						} else {
+							SecretKeySpec spec = DistributedSecuredChat.makeKey();
+	
+							byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id, spec);
+							byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
+							Message message = new Message(MessageType.TokenPoll, aesKey, encrypted_data);
+							rmi_obj.group_flood(g, me, me, message);
+						}
 					}
 				}
-				
+				catch(Exception e){
+					e.printStackTrace();
+				}
 				if (me.parent == null) {
 					if (me.children.size() > 0) {
 						User new_parent = me.children.get(0);
