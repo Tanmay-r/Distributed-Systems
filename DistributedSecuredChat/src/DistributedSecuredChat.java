@@ -94,7 +94,7 @@ public class DistributedSecuredChat {
 			System.out.println("Wrong input!!!");
 
 		}
-		while (true) {
+		while (in_network) {
 			System.out.println("Choose Action: ");
 			System.out.println("\t[0] Send Personal Message");
 			System.out.println("\t[1] Send Group Message");
