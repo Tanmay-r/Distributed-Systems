@@ -139,6 +139,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				}
 			} else if (message.type == MessageType.ChildLeavingNetwork) {
 				try {
+					System.out.println("My child leaving network " + source.id);
 					byte[] aesKeyBytes = DistributedSecuredChat.decrypt(message.key,
 							DistributedSecuredChat.me.private_key);
 					SecretKeySpec spec = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length,
@@ -155,6 +156,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				}
 			} else if (message.type == MessageType.ParentLeavingNetwork) {
 				try {
+					System.out.println("My parent leaving network " + source.id);
 					byte[] aesKeyBytes = DistributedSecuredChat.decrypt(message.key,
 							DistributedSecuredChat.me.private_key);
 					SecretKeySpec spec = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length,
