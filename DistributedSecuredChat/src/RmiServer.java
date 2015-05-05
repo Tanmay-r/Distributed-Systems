@@ -135,6 +135,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					DistributedSecuredChat.rmi_obj.flood(source, DistributedSecuredChat.me,
 							DistributedSecuredChat.me, msg);
 				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			} else if (message.type == MessageType.ChildLeavingNetwork) {
 				try {
@@ -150,6 +151,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					}
 					DistributedSecuredChat.me.children.remove(source);
 				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			} else if (message.type == MessageType.ParentLeavingNetwork) {
 				try {
@@ -161,6 +163,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 					User parent = (User) DistributedSecuredChat.fromString(msg);
 					DistributedSecuredChat.me.parent = parent;
 				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			} else if (message.type == MessageType.TokenPollReply) {
 				try {
@@ -178,7 +181,9 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 								DistributedSecuredChat.me, msg);
 					}
 				} catch (Exception e) {
+					e.printStackTrace();
 				}
+				
 			} else if (message.type == MessageType.TokenPass) {
 				try {
 					String group_name = new String(message.msg, "UTF8");
@@ -203,6 +208,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 								DistributedSecuredChat.me, DistributedSecuredChat.me, msg);
 					}
 				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
 
