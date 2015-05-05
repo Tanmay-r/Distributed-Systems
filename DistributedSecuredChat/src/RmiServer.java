@@ -151,7 +151,8 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 						DistributedSecuredChat.me.children.add(child);
 					}
 					DistributedSecuredChat.me.children.remove(source);
-					if(DistributedSecuredChat.me.parent.equals(source)){
+					if (DistributedSecuredChat.me.parent != null
+							&& DistributedSecuredChat.me.parent.equals(source)) {
 						DistributedSecuredChat.me.parent = null;
 					}
 				} catch (Exception e) {
@@ -188,7 +189,7 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				
+
 			} else if (message.type == MessageType.TokenPass) {
 				try {
 					String group_name = new String(message.msg, "UTF8");
