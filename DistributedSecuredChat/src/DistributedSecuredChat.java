@@ -269,6 +269,7 @@ public class DistributedSecuredChat {
 			}
 
 		}
+		System.exit(0);
 		// scanner.close();
 
 	}

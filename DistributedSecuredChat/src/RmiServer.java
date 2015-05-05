@@ -151,6 +151,9 @@ public class RmiServer extends UnicastRemoteObject implements RmiServerIntf {
 						DistributedSecuredChat.me.children.add(child);
 					}
 					DistributedSecuredChat.me.children.remove(source);
+					if(DistributedSecuredChat.me.parent.equals(source)){
+						DistributedSecuredChat.me.parent = null;
+					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
