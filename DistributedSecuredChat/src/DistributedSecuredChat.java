@@ -162,69 +162,97 @@ public class DistributedSecuredChat {
 				Group destination = new Group(destination_id, null, null);
 				for (Group g : me.membership) {
 					if (g.equals(destination)) {
-						if(!g.token){
+						if (!g.token) {
 							SecretKeySpec spec = DistributedSecuredChat.makeKey();
-	
-							byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id, spec);
+
+							byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id,
+									spec);
 							byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
-							Message message = new Message(MessageType.LeaveGroup, aesKey, encrypted_data);
+							Message message = new Message(MessageType.LeaveGroup, aesKey,
+									encrypted_data);
 							me.membership.remove(g);
 							rmi_obj.group_flood(g, me, me, message);
-						}else{
+						} else {
 							SecretKeySpec spec = DistributedSecuredChat.makeKey();
-							
-							byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id, spec);
+
+							byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id,
+									spec);
 							byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
-							Message message = new Message(MessageType.TokenPoll, aesKey, encrypted_data);
+							Message message = new Message(MessageType.TokenPoll, aesKey,
+									encrypted_data);
 							rmi_obj.group_flood(g, me, me, message);
 						}
-						
+
 						break;
 					}
 				}
 				break;
 			}
-			case 5:{
-				for(Group g: me.membership){
-					//TODO leave group
-				}
-				if(me.parent == null){
-					User new_parent = me.children.get(0);
-					me.children.remove(0);
-					String msg = toString(me.children);
-					SecretKeySpec spec = DistributedSecuredChat.makeKey();
+			case 5: {
+				for (Group g : me.membership) {
+					if (!g.token) {
+						SecretKeySpec spec = DistributedSecuredChat.makeKey();
 
-					byte[] encrypted_data = DistributedSecuredChat.encryptMessage(msg, spec);
-					byte[] aesKey = DistributedSecuredChat.encrypt(spec, new_parent.public_key);
-					Message message = new Message(MessageType.ChildLeavingNetwork, aesKey, encrypted_data);
-					
-					rmi_obj.flood(me.parent, me, me, message);
-					for (User child:me.children){
-						msg = toString(new_parent);
-						spec = DistributedSecuredChat.makeKey();
+						byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id,
+								spec);
+						byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
+						Message message = new Message(MessageType.LeaveGroup, aesKey,
+								encrypted_data);
+						me.membership.remove(g);
+						rmi_obj.group_flood(g, me, me, message);
+					} else {
+						SecretKeySpec spec = DistributedSecuredChat.makeKey();
 
-						encrypted_data = DistributedSecuredChat.encryptMessage(msg, spec);
-						aesKey = DistributedSecuredChat.encrypt(spec, child.public_key);
-						message = new Message(MessageType.ParentLeavingNetwork, aesKey, encrypted_data);
-						rmi_obj.flood(child, me, me, message);
+						byte[] encrypted_data = DistributedSecuredChat.encryptMessage(me.id,
+								spec);
+						byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
+						Message message = new Message(MessageType.TokenPoll, aesKey,
+								encrypted_data);
+						rmi_obj.group_flood(g, me, me, message);
 					}
 				}
-				else{
+				if (me.parent == null) {
+					if(me.children.size() > 0){
+						User new_parent = me.children.get(0);
+						me.children.remove(0);
+						String msg = toString(me.children);
+						SecretKeySpec spec = DistributedSecuredChat.makeKey();
+	
+						byte[] encrypted_data = DistributedSecuredChat.encryptMessage(msg, spec);
+						byte[] aesKey = DistributedSecuredChat.encrypt(spec, new_parent.public_key);
+						Message message = new Message(MessageType.ChildLeavingNetwork, aesKey,
+								encrypted_data);
+	
+						rmi_obj.flood(new_parent, me, me, message);
+						for (User child : me.children) {
+							msg = toString(new_parent);
+							spec = DistributedSecuredChat.makeKey();
+	
+							encrypted_data = DistributedSecuredChat.encryptMessage(msg, spec);
+							aesKey = DistributedSecuredChat.encrypt(spec, child.public_key);
+							message = new Message(MessageType.ParentLeavingNetwork, aesKey,
+									encrypted_data);
+							rmi_obj.flood(child, me, me, message);
+						}
+					}
+				} else {
 					String msg = toString(me.children);
 					SecretKeySpec spec = DistributedSecuredChat.makeKey();
 
 					byte[] encrypted_data = DistributedSecuredChat.encryptMessage(msg, spec);
 					byte[] aesKey = DistributedSecuredChat.encrypt(spec, me.parent.public_key);
-					Message message = new Message(MessageType.ChildLeavingNetwork, aesKey, encrypted_data);
-					
+					Message message = new Message(MessageType.ChildLeavingNetwork, aesKey,
+							encrypted_data);
+
 					rmi_obj.flood(me.parent, me, me, message);
-					for (User child:me.children){
+					for (User child : me.children) {
 						msg = toString(me.parent);
 						spec = DistributedSecuredChat.makeKey();
 
 						encrypted_data = DistributedSecuredChat.encryptMessage(msg, spec);
 						aesKey = DistributedSecuredChat.encrypt(spec, child.public_key);
-						message = new Message(MessageType.ParentLeavingNetwork, aesKey, encrypted_data);
+						message = new Message(MessageType.ParentLeavingNetwork, aesKey,
+								encrypted_data);
 						rmi_obj.flood(child, me, me, message);
 					}
 				}
