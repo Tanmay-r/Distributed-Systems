@@ -17,6 +17,7 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Scanner;
 
 import javax.crypto.Cipher;
@@ -189,7 +190,9 @@ public class DistributedSecuredChat {
 				break;
 			}
 			case 5: {
-				for (Group g : me.membership) {
+				
+				for (Iterator<Group> iterator = me.membership.iterator(); iterator.hasNext();) {
+					Group g = iterator.next(); 
 					if (!g.token) {
 						SecretKeySpec spec = DistributedSecuredChat.makeKey();
 
@@ -197,7 +200,7 @@ public class DistributedSecuredChat {
 						byte[] aesKey = DistributedSecuredChat.encrypt(spec, g.public_key);
 						Message message = new Message(MessageType.LeaveGroup, aesKey,
 								encrypted_data);
-						me.membership.remove(g);
+						iterator.remove();
 						rmi_obj.group_flood(g, me, me, message);
 					} else {
 						SecretKeySpec spec = DistributedSecuredChat.makeKey();
@@ -208,6 +211,7 @@ public class DistributedSecuredChat {
 						rmi_obj.group_flood(g, me, me, message);
 					}
 				}
+				
 				if (me.parent == null) {
 					if (me.children.size() > 0) {
 						User new_parent = me.children.get(0);
